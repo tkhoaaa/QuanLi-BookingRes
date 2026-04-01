@@ -1,0 +1,16 @@
+{
+  "name": "bt-quanlibooking",
+  "version": "1.0.0",
+  "description": "Restaurant Booking & Menu Manager",
+  "private": true,
+  "scripts": {
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm run dev",
+    "seed": "cd backend && npm run seed",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

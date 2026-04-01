@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --version && npm --version)",
+      "Bash(mongod --version 2>/dev/null || echo \"mongod not in PATH\")",
+      "Bash(cd C:/Users/Admin/source/repos/bt-quanlibooking/backend && npm install 2>&1 | tail -5)",
+      "Bash(cd C:/Users/Admin/source/repos/bt-quanlibooking/frontend && npm install 2>&1 | tail -5)",
+      "Bash(cd C:/Users/Admin/source/repos/bt-quanlibooking && npm install 2>&1 | tail -3)",
+      "Bash(cd C:/Users/Admin/source/repos/bt-quanlibooking/frontend && npx vite build 2>&1 | tail -20)",
+      "Bash(\"/c/Program Files/MongoDB/Server/8.2/bin/mongod.exe\" --dbpath \"/c/Users/Admin/data/db\" --logpath \"/c/Users/Admin/data/db/mongod.log\" --bind_ip 127.0.0.1 --port 27017 --fork 2>&1 || echo \"MongoDB may already be running\")",
+      "Bash(\"/c/Program Files/MongoDB/Server/8.2/bin/mongod.exe\" --version 2>&1 | head -3)",
+      "Bash(cd C:/Users/Admin/source/repos/bt-quanlibooking/backend && node src/utils/seed.js 2>&1)",
+      "Bash(ls \"C:\\\\Users\\\\Admin\\\\source\\\\repos\\\\bt-quanlibooking\" 2>/dev/null || dir \"C:\\\\Users\\\\Admin\\\\source\\\\repos\\\\bt-quanlibooking\")",
+      "Bash(cd C:/Users/Admin/source/repos/bt-quanlibooking/frontend && npm install 2>&1)",
+      "Bash(cd C:/Users/Admin/source/repos/bt-quanlibooking/backend && npm install 2>&1)",
+      "Bash(mongosh --eval \"db.runCommand\\({ping:1}\\)\" --quiet 2>/dev/null || mongo --eval \"db.runCommand\\({ping:1}\\)\" --quiet 2>/dev/null || echo \"MongoDB status check failed\")",
+      "Bash(sc query:*)",
+      "Bash(mongosh \"mongodb://localhost:27017/quanli_booking\" --eval \"db.runCommand\\({ping:1}\\)\" --quiet 2>&1 | head -5)",
+      "Bash(node -e \"require\\('mongodb'\\).MongoClient.connect\\('mongodb://localhost:27017/quanli_booking'\\).then\\(c => { console.log\\('MongoDB connected'\\); c.close\\(\\); }\\).catch\\(e => console.error\\('MongoDB error:', e.message\\)\\)\" 2>&1 | head -5)",
+      "Bash(cd C:/Users/Admin/source/repos/bt-quanlibooking/backend && node src/server.js 2>&1)",
+      "Bash(cd C:/Users/Admin/source/repos/bt-quanlibooking/frontend && npm run dev 2>&1)",
+      "Bash(cd C:/Users/Admin/source/repos/bt-quanlibooking/frontend && node -e \"console.log\\(require\\('./node_modules/react-hot-toast/package.json'\\).version\\)\")",
+      "Bash(curl -s http://localhost:5000/api/health | node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); console.log\\(d\\);\" && curl -s \"http://localhost:5000/api/foods?limit=3\" | node -e \"const chunks=[]; process.stdin.on\\('data',c=>chunks.push\\(c\\)\\); process.stdin.on\\('end',\\(\\)=>{const d=JSON.parse\\(Buffer.concat\\(chunks\\).toString\\(\\)\\);console.log\\('Foods count:', d.data?.foods?.length, '| Total:', d.data?.pagination?.total\\);}\\)\")",
+      "Bash(curl -s http://localhost:5000/api/health && echo \"\" && curl -s \"http://localhost:5000/api/foods?limit=3\" 2>&1 | node -p \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0,'utf8'\\)\\); JSON.stringify\\({foodsCount: d.data?.foods?.length, total: d.data?.pagination?.total}\\)\")",
+      "Bash(curl -s http://localhost:5000/api/foods?limit=1 | head -c 100)",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/register-admin \\\\\n  -H \"Content-Type: application/json\" \\\\\n  -d '{\"fullName\":\"Test Admin\",\"email\":\"testadmin@nhavien.com\",\"password\":\"admin123\",\"phone\":\"0909999999\",\"adminSecretKey\":\"ADMINNHAHANGVIET\"}' | python3 -m json.tool 2>/dev/null || cat)",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/register-admin -H \"Content-Type: application/json\" -d \"{\\\\\"fullName\\\\\":\\\\\"Test Admin\\\\\",\\\\\"email\\\\\":\\\\\"testadmin@nhavien.com\\\\\",\\\\\"password\\\\\":\\\\\"admin123\\\\\",\\\\\"phone\\\\\":\\\\\"0909999999\\\\\",\\\\\"adminSecretKey\\\\\":\\\\\"ADMINNHAHANGVIET\\\\\"}\")",
+      "Bash(taskkill //F //IM node.exe 2>/dev/null; sleep 1; echo \"Killed\")",
+      "Bash(find \"C:\\\\Users\\\\Admin\\\\source\\\\repos\\\\bt-quanlibooking\" -type f -not -path \"*/node_modules/*\" -not -path \"*/.claude/*\" -not -path \"*/.specstory/*\" 2>/dev/null | sort)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

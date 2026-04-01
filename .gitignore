@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+backend/dist/
+frontend/dist/
+frontend/node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Uploads
+backend/src/uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+!.vscode/settings.json
+
+# Build
+*.tgz
+
+# Misc
+*.local

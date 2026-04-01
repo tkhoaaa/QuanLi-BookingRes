@@ -1,0 +1,16 @@
+{
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": "latest"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-console": "off",
+    "consistent-return": "warn",
+    "no-else-return": "warn"
+  }
+}

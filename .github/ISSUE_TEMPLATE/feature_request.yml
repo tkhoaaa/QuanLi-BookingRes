@@ -1,0 +1,80 @@
+name: ✨ Feature Request
+description: Đề xuất tính năng mới cho hệ thống
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Mô tả tính năng
+        Mô tả ngắn gọn tính năng bạn muốn thêm vào hệ thống.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Vấn đề / Nhu cầu
+      description: Tại sao tính năng này cần thiết? Nó giải quyết vấn đề gì?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Giải pháp đề xuất
+      description: Mô tả cách tính năng nên hoạt động
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Mức ưu tiên
+      options:
+        - Low - Ít quan trọng, có thể trì hoãn
+        - Medium - Quan trọng, cần làm sớm
+        - High - Rất quan trọng, cần làm ngay
+        - Critical - Khẩn cấp, bug hoặc blocking
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module / Phần liên quan
+      options:
+        - Frontend - UI/UX
+        - Backend - API/Logic
+        - Database - Schema/Data
+        - Full-stack - Cả frontend và backend
+        - DevOps - CI/CD/Infra
+        - Documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Phạm vi (Optional)
+      description: |
+        - **In scope**: Những gì tính năng bao gồm
+        - **Out of scope**: Những gì KHÔNG bao gồm
+      placeholder: |
+        ### In scope
+        - ...
+
+        ### Out of scope
+        - ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Danh sách checklist để biết tính năng đã hoàn thành
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: false

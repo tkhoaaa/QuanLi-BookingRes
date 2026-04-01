@@ -1,0 +1,81 @@
+name: 🐛 Bug Report
+description: Báo lỗi trong hệ thống
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Mô tả lỗi
+        Mô tả ngắn gọn lỗi bạn gặp phải.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Mô tả lỗi
+      description: Mô tả chi tiết lỗi, bao gồm những gì xảy ra và những gì bạn mong đợi
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Các bước để reproduce
+      description: Liệt kê các bước để tái hiện lỗi
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Kết quả mong đợi
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Kết quả thực tế
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Mức độ nghiêm trọng
+      options:
+        - Low - Lỗi nhỏ, không ảnh hưởng nhiều
+        - Medium - Lỗi ảnh hưởng đến workflow nhưng có workaround
+        - High - Lỗi nghiêm trọng, ảnh hưởng lớn đến user
+        - Critical - Hệ thống không thể hoạt động
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module / Phần liên quan
+      options:
+        - Frontend - UI/UX
+        - Backend - API/Logic
+        - Database - Schema/Data
+        - Auth - Đăng nhập/Phân quyền
+        - Payment - Thanh toán
+        - Real-time - Socket.io
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment (Optional)
+      description: |
+        - OS: ...
+        - Browser: ...
+        - Node.js version: ...
+        - Các thông tin khác
