@@ -1,10 +1,11 @@
 # Dependencies
 node_modules/
+backend/node_modules/
+frontend/node_modules/
 
 # Build outputs
 backend/dist/
 frontend/dist/
-frontend/node_modules/
 
 # Environment files
 .env
@@ -26,8 +27,6 @@ Thumbs.db
 .vscode/settings.json
 !.vscode/settings.json
 
-# Build
-*.tgz
-
 # Misc
 *.local
+*.tgz
