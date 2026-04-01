@@ -23,7 +23,7 @@ export default function ShipperHistoryPage() {
   const myDeliveredOrders = orders.filter(
     (o) =>
       (o.status === 'delivered' || o.status === 'cancelled') &&
-      o.shipperId === user?._id
+      o.shipper?._id === user?._id
   )
 
   return (
@@ -74,11 +74,11 @@ export default function ShipperHistoryPage() {
                     #{order._id?.slice(-8).toUpperCase()}
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium">{order.fullName}</p>
-                    <p className="text-xs text-gray-500">{order.phone}</p>
+                    <p className="font-medium">{order.shippingAddress?.name || order.user?.name || 'Khach'}</p>
+                    <p className="text-xs text-gray-500">{order.shippingAddress?.phone || order.user?.phone || '-'}</p>
                   </td>
                   <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">
-                    {order.address}
+                    {order.shippingAddress?.address || '-'}
                   </td>
                   <td className="px-4 py-3 text-primary font-medium">
                     {formatCurrency(order.total)}

@@ -52,8 +52,8 @@ export default function AdminOrdersPage() {
     { value: ORDER_STATUS.PENDING, label: 'Cho xu ly' },
     { value: ORDER_STATUS.CONFIRMED, label: 'Da xac nhan' },
     { value: ORDER_STATUS.PREPARING, label: 'Dang chuan bi' },
-    { value: ORDER_STATUS.READY, label: 'San sang' },
-    { value: ORDER_STATUS.SHIPPING, label: 'Dang giao' },
+    { value: ORDER_STATUS.PICKING, label: 'Dang lay hang' },
+    { value: ORDER_STATUS.DELIVERING, label: 'Dang giao' },
     { value: ORDER_STATUS.DELIVERED, label: 'Da giao' },
     { value: ORDER_STATUS.CANCELLED, label: 'Da huy' },
   ]
@@ -123,8 +123,8 @@ export default function AdminOrdersPage() {
                       #{order._id?.slice(-8).toUpperCase()}
                     </td>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{order.fullName}</p>
-                      <p className="text-xs text-gray-500">{order.phone}</p>
+                      <p className="font-medium text-gray-900">{order.shippingAddress?.name || order.user?.name || 'Khach'}</p>
+                      <p className="text-xs text-gray-500">{order.shippingAddress?.phone || order.user?.phone || '-'}</p>
                     </td>
                     <td className="px-4 py-3 text-primary font-medium">{formatCurrency(order.total)}</td>
                     <td className="px-4 py-3 text-gray-600 capitalize">{order.paymentMethod}</td>
@@ -136,7 +136,7 @@ export default function AdminOrdersPage() {
                           order.status === 'delivered' ? 'bg-green-100 text-green-700' :
                           order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
                           order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                          order.status === 'shipping' ? 'bg-indigo-100 text-indigo-700' :
+                          order.status === 'delivering' ? 'bg-cyan-100 text-cyan-700' :
                           'bg-blue-100 text-blue-700'
                         }`}
                       >

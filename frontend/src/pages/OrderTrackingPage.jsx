@@ -25,8 +25,8 @@ const statusSteps = [
   { status: ORDER_STATUS.PENDING, label: 'Cho xu ly', icon: Clock },
   { status: ORDER_STATUS.CONFIRMED, label: 'Da xac nhan', icon: CheckCircle },
   { status: ORDER_STATUS.PREPARING, label: 'Dang chuan bi', icon: ChefHat },
-  { status: ORDER_STATUS.READY, label: 'San sang', icon: Package },
-  { status: ORDER_STATUS.SHIPPING, label: 'Dang giao', icon: Truck },
+  { status: ORDER_STATUS.PICKING, label: 'Dang lay hang', icon: Package },
+  { status: ORDER_STATUS.DELIVERING, label: 'Dang giao', icon: Truck },
   { status: ORDER_STATUS.DELIVERED, label: 'Da giao', icon: CheckCircle },
 ]
 
@@ -34,8 +34,8 @@ const statusOrder = [
   ORDER_STATUS.PENDING,
   ORDER_STATUS.CONFIRMED,
   ORDER_STATUS.PREPARING,
-  ORDER_STATUS.READY,
-  ORDER_STATUS.SHIPPING,
+  ORDER_STATUS.PICKING,
+  ORDER_STATUS.DELIVERING,
   ORDER_STATUS.DELIVERED,
 ]
 
@@ -61,11 +61,11 @@ export default function OrderTrackingPage() {
     }
 
     socket.on('orderUpdated', handleOrderUpdate)
-    socket.emit('joinOrderRoom', currentOrder._id)
+    socket.emit('joinRoom', currentOrder._id)
 
     return () => {
       socket.off('orderUpdated', handleOrderUpdate)
-      socket.emit('leaveOrderRoom', currentOrder._id)
+      socket.emit('leaveRoom', currentOrder._id)
     }
   }, [currentOrder, dispatch, id])
 
@@ -209,16 +209,16 @@ export default function OrderTrackingPage() {
         </div>
 
         {/* Delivery info */}
-        {currentOrder.fulfillmentType === 'delivery' && currentOrder.address && (
+        {currentOrder.fulfillmentType === 'delivery' && currentOrder.shippingAddress && (
           <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
             <h2 className="font-semibold text-gray-900 mb-3">Dia chi giao hang</h2>
             <div className="flex items-start gap-3 text-sm">
               <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
               <div>
-                <p>{currentOrder.fullName}</p>
-                <p className="text-gray-500">{currentOrder.address}</p>
+                <p>{currentOrder.shippingAddress?.name || currentOrder.user?.name || 'Khach'}</p>
+                <p className="text-gray-500">{currentOrder.shippingAddress?.address || '-'}</p>
                 <p className="text-gray-500 flex items-center gap-1 mt-1">
-                  <Phone className="w-3 h-3" /> {currentOrder.phone}
+                  <Phone className="w-3 h-3" /> {currentOrder.shippingAddress?.phone || currentOrder.user?.phone || '-'}
                 </p>
               </div>
             </div>

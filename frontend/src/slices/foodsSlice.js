@@ -37,7 +37,7 @@ export const fetchFoods = createAsyncThunk(
       if (filters.limit) query.append('limit', filters.limit)
 
       const res = await axiosClient.get(`/foods?${query.toString()}`)
-      return res.data
+      return res.data.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch foods')
     }
@@ -117,18 +117,12 @@ const foodsSlice = createSlice({
     })
     builder.addCase(fetchFoods.fulfilled, (state, action) => {
       state.loading = false
-      state.foods = action.payload.data || action.payload.foods || []
-      if (action.payload.pagination) {
-        state.pagination = action.payload.pagination
-      } else if (action.payload.total !== undefined) {
-        state.pagination = {
-          total: action.payload.total,
-          page: action.payload.page || state.filters.page,
-          limit: action.payload.limit || state.filters.limit,
-          totalPages: Math.ceil(
-            (action.payload.total) / (action.payload.limit || state.filters.limit)
-          ),
-        }
+      state.foods = action.payload.foods || []
+      state.pagination = action.payload.pagination || {
+        total: 0,
+        page: 1,
+        limit: state.filters.limit,
+        totalPages: 1,
       }
     })
     builder.addCase(fetchFoods.rejected, (state, action) => {

@@ -37,10 +37,10 @@ export default function ShipperDashboardPage() {
   }, [dispatch])
 
   const pendingOrders = orders.filter(
-    (o) => o.status === ORDER_STATUS.READY && !o.shipperId
+    (o) => o.status === ORDER_STATUS.PICKING && !o.shipper
   )
   const myActiveOrders = orders.filter(
-    (o) => o.status === ORDER_STATUS.SHIPPING && o.shipperId === user?._id
+    (o) => o.status === ORDER_STATUS.DELIVERING && o.shipper?._id === user?._id
   )
   const displayedOrders = activeTab === 'pending' ? pendingOrders : myActiveOrders
 
@@ -195,12 +195,12 @@ export default function ShipperDashboardPage() {
               <div className="space-y-2 mb-4">
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium">{order.fullName}</span>
-                  <span className="text-gray-500">{order.phone}</span>
+                  <span className="font-medium">{order.shippingAddress?.name}</span>
+                  <span className="text-gray-500">{order.shippingAddress?.phone}</span>
                 </div>
                 <div className="flex items-start gap-2 text-sm">
                   <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <span className="text-gray-600">{order.address}</span>
+                  <span className="text-gray-600">{order.shippingAddress?.address}</span>
                 </div>
                 {order.note && (
                   <div className="flex items-start gap-2 text-sm text-gray-500 italic">

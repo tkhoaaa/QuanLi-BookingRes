@@ -42,14 +42,6 @@ cd backend && npm run seed
 npm run dev
 ```
 
-## Cấu hình
-
-`backend/.env`:
-```
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/quanli_booking
-NODE_ENV=development
-```
 
 ## Scripts
 
@@ -62,3 +54,5 @@ NODE_ENV=development
 ## License
 
 MIT
+netstat -ano | findstr :8080
+taskkill /PID 4708 /F

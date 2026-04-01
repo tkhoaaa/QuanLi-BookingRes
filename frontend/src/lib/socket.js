@@ -32,8 +32,16 @@ export function joinAdminRoom() {
   socket.emit('joinAdminRoom')
 }
 
+export function leaveAdminRoom() {
+  socket.emit('leaveAdminRoom')
+}
+
 export function joinShipperRoom() {
   socket.emit('joinShipperRoom')
+}
+
+export function leaveShipperRoom() {
+  socket.emit('leaveShipperRoom')
 }
 
 export default socket

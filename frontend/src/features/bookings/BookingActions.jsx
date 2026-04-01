@@ -11,7 +11,7 @@ export default function BookingActions({
   loading,
 }) {
   const isAdmin = order?.role === 'admin'
-  const isShipper = order?.shipperId
+  const isShipper = !!order?.shipper?._id
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -75,14 +75,14 @@ export default function BookingActions({
         <Button
           size="sm"
           variant="primary"
-          onClick={() => onStatusUpdate(ORDER_STATUS.READY)}
+          onClick={() => onStatusUpdate(ORDER_STATUS.PICKING)}
           loading={loading}
         >
           Da san sang
         </Button>
       )}
 
-      {order?.status === ORDER_STATUS.READY && !isShipper && isAdmin && (
+      {order?.status === ORDER_STATUS.PICKING && !isShipper && isAdmin && (
         <Button
           size="sm"
           variant="secondary"
@@ -93,7 +93,7 @@ export default function BookingActions({
         </Button>
       )}
 
-      {order?.status === ORDER_STATUS.READY && isShipper && (
+      {order?.status === ORDER_STATUS.PICKING && isShipper && (
         <Button
           size="sm"
           variant="secondary"
@@ -104,7 +104,7 @@ export default function BookingActions({
         </Button>
       )}
 
-      {order?.status === ORDER_STATUS.SHIPPING && isShipper && (
+      {order?.status === ORDER_STATUS.DELIVERING && isShipper && (
         <Button
           size="sm"
           variant="secondary"
