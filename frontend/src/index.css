@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+    background-color: #faf6f1;
+    color: #292524;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Typography defaults */
+  h1, h2, h3, h4 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  /* Focus visible */
+  :focus-visible {
+    outline: 2px solid #0d9488;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: #0d948820;
+    color: #0d9488;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #d6d3d1;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a29e;
+  }
+
+  /* Remove default button styles */
+  button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+  }
+
+  /* Remove default input styles */
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+    font-size: inherit;
+  }
+}
+
+@layer components {
+  /* ── Card ──────────────────────────────────── */
+  .card {
+    @apply bg-white rounded-xl shadow-card border border-charcoal-100;
+  }
+  .card-hover {
+    @apply transition-shadow duration-300 hover:shadow-card-hover;
+  }
+
+  /* ── Skeleton shimmer ─────────────────────── */
+  .skeleton {
+    @apply bg-gradient-to-r from-charcoal-100 via-charcoal-50 to-charcoal-100;
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+
+  /* ── Page container ──────────────────────── */
+  .page-container {
+    @apply min-h-screen bg-cream;
+  }
+
+  /* ── Section header ──────────────────────── */
+  .section-title {
+    @apply font-heading text-2xl md:text-3xl font-semibold text-charcoal-900;
+  }
+
+  /* ── Badge variants ──────────────────────── */
+  .badge-success {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700;
+  }
+  .badge-warning {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700;
+  }
+  .badge-error {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700;
+  }
+  .badge-info {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700;
+  }
+
+  /* ── Order status badges ─────────────────── */
+  .status-pending     { @apply bg-amber-100 text-amber-700; }
+  .status-confirmed   { @apply bg-blue-100 text-blue-700; }
+  .status-preparing   { @apply bg-orange-100 text-orange-700; }
+  .status-picking     { @apply bg-purple-100 text-purple-700; }
+  .status-delivering  { @apply bg-cyan-100 text-cyan-700; }
+  .status-delivered   { @apply bg-green-100 text-green-700; }
+  .status-cancelled   { @apply bg-red-100 text-red-700; }
+  .status-refunded    { @apply bg-gray-100 text-gray-600; }
+}
+
+@layer utilities {
+  /* ── Truncate multi-line ──────────────────── */
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  /* ── Glass effect ────────────────────────── */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md;
+  }
+
+  /* ── Gradient text ───────────────────────── */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+  }
+}
