@@ -48,10 +48,10 @@ export default function ShipperDashboardPage() {
     setActionLoading(orderId)
     try {
       await dispatch(acceptOrder(orderId)).unwrap()
-      toast.success('Ban da nhan don hang nay')
+      toast.success('Bạn đã nhận đơn hàng này')
       dispatch(fetchAllOrders({ limit: 100 }))
     } catch (error) {
-      toast.error(error || 'Nhan don that bai')
+      toast.error(error || 'Nhận đơn thất bại')
     } finally {
       setActionLoading(null)
     }
@@ -61,10 +61,10 @@ export default function ShipperDashboardPage() {
     setActionLoading(orderId)
     try {
       await dispatch(completeOrder(orderId)).unwrap()
-      toast.success('Da xac nhan giao hang thanh cong')
+      toast.success('Đã xác nhận giao hàng thành công')
       dispatch(fetchAllOrders({ limit: 100 }))
     } catch (error) {
-      toast.error(error || 'Xac nhan that bai')
+      toast.error(error || 'Xác nhận thất bại')
     } finally {
       setActionLoading(null)
     }
@@ -76,7 +76,7 @@ export default function ShipperDashboardPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Shipper Dashboard</h1>
         <p className="text-gray-500 text-sm mt-1">
-          Xin chao, {user?.name} - Hom nay ban co {pendingOrders.length} don cho nhan
+          Xin chào, {user?.name} - Hôm nay bạn có {pendingOrders.length} đơn chờ nhận
         </p>
       </div>
 
@@ -93,7 +93,7 @@ export default function ShipperDashboardPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{pendingOrders.length}</p>
-              <p className="text-sm text-gray-500">Don cho nhan</p>
+              <p className="text-sm text-gray-500">Đơn chờ nhận</p>
             </div>
           </div>
         </motion.div>
@@ -109,7 +109,7 @@ export default function ShipperDashboardPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{myActiveOrders.length}</p>
-              <p className="text-sm text-gray-500">Dang giao</p>
+              <p className="text-sm text-gray-500">Đang giao</p>
             </div>
           </div>
         </motion.div>
@@ -125,7 +125,7 @@ export default function ShipperDashboardPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">0</p>
-              <p className="text-sm text-gray-500">Da giao hom nay</p>
+              <p className="text-sm text-gray-500">Đã giao hôm nay</p>
             </div>
           </div>
         </motion.div>
@@ -142,7 +142,7 @@ export default function ShipperDashboardPage() {
           }`}
         >
           <Clock className="w-4 h-4 inline mr-1" />
-          Don cho nhan ({pendingOrders.length})
+          Đơn chờ nhận ({pendingOrders.length})
         </button>
         <button
           onClick={() => setActiveTab('active')}
@@ -153,7 +153,7 @@ export default function ShipperDashboardPage() {
           }`}
         >
           <Truck className="w-4 h-4 inline mr-1" />
-          Dang giao ({myActiveOrders.length})
+          Đang giao ({myActiveOrders.length})
         </button>
       </div>
 
@@ -167,8 +167,8 @@ export default function ShipperDashboardPage() {
           <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
           <p className="text-gray-500">
             {activeTab === 'pending'
-              ? 'Khong co don hang nao cho nhan'
-              : 'Khong co don hang dang giao'}
+              ? 'Không có đơn hàng nào chờ nhận'
+              : 'Không có đơn hàng đang giao'}
           </p>
         </div>
       ) : (
@@ -183,7 +183,7 @@ export default function ShipperDashboardPage() {
             >
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <span className="text-xs text-gray-400">Ma don</span>
+                  <span className="text-xs text-gray-400">Mã đơn</span>
                   <p className="font-bold text-gray-900">
                     #{order._id?.slice(-8).toUpperCase()}
                   </p>
@@ -205,7 +205,7 @@ export default function ShipperDashboardPage() {
                 {order.note && (
                   <div className="flex items-start gap-2 text-sm text-gray-500 italic">
                     <Navigation className="w-4 h-4 mt-0.5" />
-                    <span>Ghi chu: {order.note}</span>
+                    <span>Ghi chú: {order.note}</span>
                   </div>
                 )}
               </div>
@@ -222,7 +222,7 @@ export default function ShipperDashboardPage() {
                 ))}
                 {order.items?.length > 3 && (
                   <span className="text-xs text-gray-500 flex-shrink-0">
-                    +{order.items.length - 3} mon
+                    +{order.items.length - 3} món
                   </span>
                 )}
                 <span className="ml-auto font-bold text-primary text-lg flex-shrink-0">
@@ -233,7 +233,7 @@ export default function ShipperDashboardPage() {
               {/* Actions */}
               <div className="flex items-center justify-between pt-3 border-t">
                 <span className="text-xs text-gray-400">
-                  Dat luc {formatDateTime(order.createdAt)}
+                  Đặt lúc {formatDateTime(order.createdAt)}
                 </span>
                 {activeTab === 'pending' ? (
                   <Button
@@ -243,7 +243,7 @@ export default function ShipperDashboardPage() {
                     loading={actionLoading === order._id}
                     icon={Truck}
                   >
-                    Nhan giao hang
+                    Nhận giao hàng
                   </Button>
                 ) : (
                   <Button
@@ -253,7 +253,7 @@ export default function ShipperDashboardPage() {
                     loading={actionLoading === order._id}
                     icon={CheckCircle}
                   >
-                    Da giao hang
+                    Đã giao hàng
                   </Button>
                 )}
               </div>

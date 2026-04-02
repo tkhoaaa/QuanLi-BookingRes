@@ -5,6 +5,7 @@ import foodsReducer from '../slices/foodsSlice'
 import ordersReducer from '../slices/ordersSlice'
 import notificationsReducer from '../slices/notificationsSlice'
 import bookingsReducer from '../slices/bookingsSlice'
+import wishlistReducer from '../slices/wishlistSlice'
 
 export const store = configureStore({
   reducer: {
@@ -14,5 +15,6 @@ export const store = configureStore({
     orders: ordersReducer,
     notifications: notificationsReducer,
     bookings: bookingsReducer,
+    wishlist: wishlistReducer,
   },
 })

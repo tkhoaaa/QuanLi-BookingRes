@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Outlet } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
@@ -15,8 +15,11 @@ import {
   Truck,
   LayoutDashboard,
   Search,
+  ChevronDown,
 } from 'lucide-react'
 import { logout } from '../slices/authSlice'
+import { clearWishlist } from '../slices/wishlistSlice'
+import { fetchWishlist } from '../slices/wishlistSlice'
 import { selectCartCount } from '../slices/cartSlice'
 import { selectUnreadCount } from '../slices/notificationsSlice'
 
@@ -33,8 +36,16 @@ export default function MainLayout() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Fetch wishlist once when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchWishlist())
+    }
+  }, [isAuthenticated, dispatch])
+
   const handleLogout = () => {
     dispatch(logout())
+    dispatch(clearWishlist())
     setUserMenuOpen(false)
     navigate('/')
   }
@@ -48,12 +59,12 @@ export default function MainLayout() {
   }
 
   const navLinks = [
-    { to: '/', label: 'Trang chu' },
-    { to: '/cart', label: 'Gio hang' },
+    { to: '/', label: 'Trang chủ' },
+    { to: '/cart', label: 'Giỏ hàng' },
   ]
 
   const adminLink = isAuthenticated && user?.role === 'admin'
-    ? { to: '/admin', label: 'Quan ly', icon: LayoutDashboard }
+    ? { to: '/admin', label: 'Quản lý', icon: LayoutDashboard }
     : null
 
   const shipperLink = isAuthenticated && user?.role === 'shipper'
@@ -100,7 +111,7 @@ export default function MainLayout() {
               <form onSubmit={handleSearch} className="hidden lg:block relative">
                 <input
                   type="text"
-                  placeholder="Tim kiem mon an..."
+                  placeholder="Tìm kiếm món ăn..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 pr-4 py-2 text-sm border border-charcoal-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-56 bg-charcoal-50/50"
@@ -178,7 +189,7 @@ export default function MainLayout() {
                           onClick={() => setUserMenuOpen(false)}
                         >
                           <User className="w-4 h-4" />
-                          Tai khoan
+                          Tài khoản
                         </Link>
                         <Link
                           to="/orders"
@@ -186,7 +197,7 @@ export default function MainLayout() {
                           onClick={() => setUserMenuOpen(false)}
                         >
                           <Bell className="w-4 h-4" />
-                          Don hang cua toi
+                          Đơn hàng của tôi
                         </Link>
                         {(user?.role === 'admin' || user?.role === 'manager') && (
                           <Link
@@ -195,7 +206,7 @@ export default function MainLayout() {
                             onClick={() => setUserMenuOpen(false)}
                           >
                             <LayoutDashboard className="w-4 h-4" />
-                            Quan ly
+                            Quản lý
                           </Link>
                         )}
                         {user?.role === 'shipper' && (
@@ -214,7 +225,7 @@ export default function MainLayout() {
                             className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                           >
                             <LogOut className="w-4 h-4" />
-                            Dang xuat
+                            Đăng xuất
                           </button>
                         </div>
                       </motion.div>
@@ -227,13 +238,13 @@ export default function MainLayout() {
                     to="/login"
                     className="px-4 py-2 text-sm font-medium text-charcoal-700 hover:text-primary transition-colors"
                   >
-                    Dang nhap
+                    Đăng nhập
                   </Link>
                   <Link
                     to="/register"
                     className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-full hover:bg-primary-dark transition-colors shadow-sm hover:shadow"
                   >
-                    Dang ky
+                    Đăng ký
                   </Link>
                 </div>
               )}
@@ -263,7 +274,7 @@ export default function MainLayout() {
                 <form onSubmit={handleSearch} className="relative mb-3">
                   <input
                     type="text"
-                    placeholder="Tim kiem mon an..."
+                    placeholder="Tìm kiếm món ăn..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-4 py-2.5 text-sm border border-charcoal-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -288,14 +299,14 @@ export default function MainLayout() {
                       className="flex-1 py-2.5 text-sm font-medium text-center text-charcoal-700 border border-charcoal-200 rounded-xl"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Dang nhap
+                      Đăng nhập
                     </Link>
                     <Link
                       to="/register"
                       className="flex-1 py-2.5 text-sm font-medium text-center bg-primary text-white rounded-xl"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Dang ky
+                      Đăng ký
                     </Link>
                   </div>
                 )}
@@ -320,23 +331,23 @@ export default function MainLayout() {
                 <span className="text-xl font-bold text-white font-heading">Res-booking</span>
               </div>
               <p className="text-sm text-charcoal-400 leading-relaxed">
-                He thong dat mon va quan ly nha hang hien dai, nhanh chong va tien loi.
+                Hệ thống đặt món và quản lý nhà hàng hiện đại, nhanh chóng và tiện lợi.
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-3 font-heading">Lien he</h3>
+              <h3 className="font-semibold text-white mb-3 font-heading">Liên hệ</h3>
               <p className="text-sm text-charcoal-400">Email: contact@resbooking.com</p>
-              <p className="text-sm text-charcoal-400">Dien thoai: 0123-456-789</p>
+              <p className="text-sm text-charcoal-400">Điện thoại: 0123-456-789</p>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-3 font-heading">Huong dan</h3>
-              <p className="text-sm text-charcoal-400">Ve chung toi</p>
-              <p className="text-sm text-charcoal-400">Chinh sach bao mat</p>
-              <p className="text-sm text-charcoal-400">Dieu khoan su dung</p>
+              <h3 className="font-semibold text-white mb-3 font-heading">Hướng dẫn</h3>
+              <p className="text-sm text-charcoal-400">Về chúng tôi</p>
+              <p className="text-sm text-charcoal-400">Chính sách bảo mật</p>
+              <p className="text-sm text-charcoal-400">Điều khoản sử dụng</p>
             </div>
           </div>
           <div className="border-t border-charcoal-800 mt-8 pt-8 text-center text-sm text-charcoal-500">
-            &copy; 2026 Res-booking. Tat ca quyen duoc bao luu.
+            &copy; 2026 Res-booking. Tất cả quyền được bảo lưu.
           </div>
         </div>
       </footer>

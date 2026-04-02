@@ -1,13 +1,13 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { motion } from 'framer-motion'
-import { Minus, Plus, Trash2, ShoppingCart, ArrowRight, Tag } from 'lucide-react'
-import { selectCartItems, removeItem, updateQuantity, setCoupon } from '../slices/cartSlice'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Minus, Plus, Trash2, ShoppingCart, ArrowRight, Tag, X, Sparkles } from 'lucide-react'
+import { selectCartItems, removeItem, updateQuantity, setCoupon, clearCart } from '../slices/cartSlice'
 import { selectCartTotal } from '../slices/cartSlice'
-import { formatCurrency } from '../lib/utils'
+import { formatCurrency, resolveFoodImage } from '../lib/utils'
 import Button from '../components/ui/Button'
 import EmptyState from '../components/ui/EmptyState'
-import { useState } from 'react'
 
 export default function CartPage() {
   const dispatch = useDispatch()
@@ -28,6 +28,7 @@ export default function CartPage() {
   const handleApplyCoupon = () => {
     if (!couponInput.trim()) return
     dispatch(setCoupon({ code: couponInput, discount: 10, discountType: 'percent' }))
+    setCouponInput('')
   }
 
   const handleRemoveCoupon = () => {
@@ -37,12 +38,12 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-cream">
         <EmptyState
           icon={ShoppingCart}
-          title="Gio hang trong"
-          description="Ban chua them mon nao vao gio hang. Hay kham pha thuc don cua chung toi!"
-          actionLabel="Kham pha thuc don"
+          title="Giỏ hàng trống"
+          description="Bạn chưa thêm món nào vào giỏ hàng. Hãy khám phá thực đơn của chúng tôi!"
+          actionLabel="Khám phá thực đơn"
           onAction={() => navigate('/')}
         />
       </div>
@@ -50,105 +51,140 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-          <ShoppingCart className="w-6 h-6 text-primary" />
-          Gio hang cua ban ({items.length} mon)
-        </h1>
+    <div className="min-h-screen bg-cream py-8">
+      <div className="max-w-5xl mx-auto px-4">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+            <ShoppingCart className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-charcoal-900 font-heading">Giỏ hàng của bạn</h1>
+            <p className="text-sm text-charcoal-500">{items.length} món hàng</p>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
-            {items.map((item, index) => {
-              const variantPrice = item.variant?.price || 0
-              const toppingsPrice = item.toppings.reduce((s, t) => s + (t.price || 0), 0)
-              const itemTotal = (item.food.price + variantPrice + toppingsPrice) * item.quantity
+          <div className="lg:col-span-2 space-y-3">
+            {/* Clear all */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => dispatch(clearCart())}
+                className="text-xs text-charcoal-400 hover:text-red-500 transition-colors flex items-center gap-1"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Xóa tất cả
+              </button>
+            </div>
 
-              return (
-                <motion.div
-                  key={`${item.food._id}-${item.variantStr}-${item.toppingsStr}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="bg-white rounded-xl p-4 shadow-sm flex gap-4"
-                >
-                  <img
-                    src={item.food.image || 'https://via.placeholder.com/100'}
-                    alt={item.food.name}
-                    className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      to={`/food/${item.food._id}`}
-                      className="font-medium text-gray-900 hover:text-primary transition-colors"
-                    >
-                      {item.food.name}
+            <AnimatePresence>
+              {items.map((item, index) => {
+                const variantPrice = item.variant?.price || 0
+                const toppingsPrice = item.toppings.reduce((s, t) => s + (t.price || 0), 0)
+                const itemTotal = (item.food.price + variantPrice + toppingsPrice) * item.quantity
+
+                return (
+                  <motion.div
+                    key={`${item.food._id}-${item.variantStr}-${item.toppingsStr}`}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+                    transition={{ delay: index * 0.05 }}
+                    className="bg-white rounded-2xl p-4 shadow-card flex gap-4"
+                  >
+                    <Link to={`/food/${item.food._id}`} className="flex-shrink-0">
+                      <img
+                        src={resolveFoodImage(item.food.images, 'https://via.placeholder.com/100?text=Food')}
+                        alt={item.food.name}
+                        className="w-24 h-24 rounded-xl object-cover"
+                      />
                     </Link>
-                    {item.variant && (
-                      <p className="text-xs text-gray-500 mt-0.5">{item.variant.name}</p>
-                    )}
-                    {item.toppings.length > 0 && (
-                      <p className="text-xs text-gray-500">
-                        + {item.toppings.map((t) => t.name).join(', ')}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-primary font-semibold">
-                        {formatCurrency(itemTotal)}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            dispatch(updateQuantity({ index, quantity: item.quantity - 1 }))
-                          }
-                          className="w-7 h-7 flex items-center justify-center rounded bg-gray-100 hover:bg-gray-200"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="w-8 text-center font-medium">{item.quantity}</span>
-                        <button
-                          onClick={() =>
-                            dispatch(updateQuantity({ index, quantity: item.quantity + 1 }))
-                          }
-                          className="w-7 h-7 flex items-center justify-center rounded bg-gray-100 hover:bg-gray-200"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <Link
+                            to={`/food/${item.food._id}`}
+                            className="font-semibold text-charcoal-900 hover:text-primary transition-colors line-clamp-1"
+                          >
+                            {item.food.name}
+                          </Link>
+                          {item.variant && (
+                            <p className="text-xs text-charcoal-500 mt-0.5 bg-charcoal-100 inline-block px-2 py-0.5 rounded-full">
+                              {item.variant.name}
+                              {item.variant.price > 0 && ` +${formatCurrency(item.variant.price)}`}
+                            </p>
+                          )}
+                          {item.toppings.length > 0 && (
+                            <p className="text-xs text-charcoal-500 mt-1">
+                              + {item.toppings.map((t) => t.name).join(', ')}
+                            </p>
+                          )}
+                        </div>
                         <button
                           onClick={() => dispatch(removeItem(index))}
-                          className="w-7 h-7 flex items-center justify-center rounded text-red-500 hover:bg-red-50 ml-1"
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-charcoal-400 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
+
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-lg font-bold text-secondary font-heading">
+                          {formatCurrency(itemTotal)}
+                        </span>
+                        <div className="flex items-center bg-charcoal-100 rounded-xl overflow-hidden">
+                          <button
+                            onClick={() =>
+                              dispatch(updateQuantity({ index, quantity: Math.max(1, item.quantity - 1) }))
+                            }
+                            className="w-9 h-9 flex items-center justify-center hover:bg-charcoal-200 transition-colors"
+                          >
+                            <Minus className="w-3.5 h-3.5 text-charcoal-600" />
+                          </button>
+                          <span className="w-10 text-center font-semibold text-charcoal-900 text-sm">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() =>
+                              dispatch(updateQuantity({ index, quantity: item.quantity + 1 }))
+                            }
+                            className="w-9 h-9 flex items-center justify-center hover:bg-charcoal-200 transition-colors"
+                          >
+                            <Plus className="w-3.5 h-3.5 text-charcoal-600" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              )
-            })}
+                  </motion.div>
+                )
+              })}
+            </AnimatePresence>
           </div>
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl p-5 shadow-sm sticky top-24">
-              <h2 className="font-semibold text-gray-900 mb-4">Tong don hang</h2>
+            <div className="bg-white rounded-2xl p-5 shadow-card sticky top-24">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="w-4 h-4 text-secondary" />
+                <h2 className="font-bold text-charcoal-900 font-heading">Tổng đơn hàng</h2>
+              </div>
 
               {/* Coupon */}
               <div className="mb-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Tag className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700">Ma giam gia</span>
+                  <Tag className="w-4 h-4 text-charcoal-400" />
+                  <span className="text-sm font-medium text-charcoal-700">Mã giảm giá</span>
                 </div>
                 {coupon ? (
-                  <div className="flex items-center justify-between bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm">
-                    <span>{coupon.code}</span>
+                  <div className="flex items-center justify-between bg-green-50 text-green-700 px-3 py-2.5 rounded-xl text-sm">
                     <div className="flex items-center gap-2">
-                      <span>-{formatCurrency(discountAmount)}</span>
-                      <button onClick={handleRemoveCoupon} className="text-red-500 hover:text-red-700">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <span className="font-semibold">{coupon.code}</span>
+                      <span className="text-xs">-{discount}%</span>
                     </div>
+                    <button onClick={handleRemoveCoupon} className="text-red-400 hover:text-red-600 transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 ) : (
                   <div className="flex gap-2">
@@ -156,30 +192,30 @@ export default function CartPage() {
                       type="text"
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value)}
-                      placeholder="Nhap ma giam gia"
-                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      placeholder="Nhập mã giảm giá"
+                      className="flex-1 px-3 py-2.5 text-sm border border-charcoal-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                     <Button size="sm" onClick={handleApplyCoupon}>
-                      Ap dung
+                      Áp dụng
                     </Button>
                   </div>
                 )}
               </div>
 
-              <div className="space-y-2 text-sm border-t pt-4">
+              <div className="space-y-2.5 text-sm border-t border-charcoal-100 pt-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Tam tinh</span>
-                  <span>{formatCurrency(total)}</span>
+                  <span className="text-charcoal-500">Tạm tính</span>
+                  <span className="text-charcoal-700">{formatCurrency(total)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-green-600">
-                    <span>Giam gia</span>
+                    <span>Giảm giá</span>
                     <span>-{formatCurrency(discountAmount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between font-semibold text-base pt-2 border-t">
-                  <span>Tong cong</span>
-                  <span className="text-primary">{formatCurrency(grandTotal)}</span>
+                <div className="flex justify-between font-bold text-base pt-2.5 border-t border-charcoal-100">
+                  <span className="text-charcoal-900">Tổng cộng</span>
+                  <span className="text-secondary font-heading">{formatCurrency(grandTotal)}</span>
                 </div>
               </div>
 
@@ -195,12 +231,13 @@ export default function CartPage() {
                   className="w-full"
                   icon={ArrowRight}
                   iconPosition="right"
+                  size="lg"
                 >
-                  Tiep tuc thanh toan
+                  Tiếp tục thanh toán
                 </Button>
                 <Link to="/" className="block">
                   <Button variant="ghost" className="w-full">
-                    Tiep tuc mua sam
+                    Tiếp tục mua sắm
                   </Button>
                 </Link>
               </div>

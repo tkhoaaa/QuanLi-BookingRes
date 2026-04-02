@@ -15,13 +15,13 @@ export default function SearchFilterBar({
   className,
 }) {
   const sortOptions = [
-    { value: 'createdAt-desc', label: 'Moi nhat' },
-    { value: 'createdAt-asc', label: 'Cu nhat' },
-    { value: 'price-asc', label: 'Gia thap den cao' },
-    { value: 'price-desc', label: 'Gia cao xuong thap' },
-    { value: 'name-asc', label: 'Ten A-Z' },
-    { value: 'name-desc', label: 'Ten Z-A' },
-    { value: 'rating-desc', label: 'Danh gia cao nhat' },
+    { value: 'createdAt-desc', label: 'Mới nhất' },
+    { value: 'createdAt-asc', label: 'Cũ nhất' },
+    { value: 'price-asc', label: 'Giá thấp đến cao' },
+    { value: 'price-desc', label: 'Giá cao xuống thấp' },
+    { value: 'name-asc', label: 'Tên A-Z' },
+    { value: 'name-desc', label: 'Tên Z-A' },
+    { value: 'rating-desc', label: 'Đánh giá cao nhất' },
   ]
 
   return (
@@ -32,7 +32,7 @@ export default function SearchFilterBar({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Tim kiem mon an..."
+            placeholder="Tìm kiếm món ăn..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-10 pr-8 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -53,7 +53,7 @@ export default function SearchFilterBar({
           onChange={(e) => onCategoryChange(e.target.value)}
           className="px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-w-[160px]"
         >
-          <option value="">Tat ca danh muc</option>
+          <option value="">Tất cả danh mục</option>
           {CATEGORIES.map((cat) => (
             <option key={cat.value} value={cat.value}>
               {cat.label}
@@ -100,7 +100,7 @@ export default function SearchFilterBar({
       {/* Results count */}
       <div className="mt-3 flex items-center justify-between">
         <p className="text-sm text-gray-500">
-          Tim thay <span className="font-medium text-gray-900">{total}</span> mon an
+          Tìm thấy <span className="font-medium text-gray-900">{total}</span> món ăn
         </p>
         {(search || category) && (
           <button
@@ -110,7 +110,7 @@ export default function SearchFilterBar({
             }}
             className="text-xs text-primary hover:text-primary-dark"
           >
-            Xoa bo loc
+            Xóa bỏ lọc
           </button>
         )}
       </div>

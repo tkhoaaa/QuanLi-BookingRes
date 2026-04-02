@@ -12,9 +12,24 @@ const getFoods = asyncHandler(async (req, res) => {
     featured,
     minPrice,
     maxPrice,
+    isAvailable,
   } = req.query;
 
-  const query = { isAvailable: true };
+  const query = {};
+
+  // Default: consumer pages (no isAvailable param) see only available foods
+  // isAvailable=true: available foods
+  // isAvailable=false: unavailable foods
+  // isAvailable=all: all foods (admin view)
+  if (isAvailable === 'all') {
+    // No filter — return everything
+  } else if (isAvailable === 'true' || isAvailable === true) {
+    query.isAvailable = true
+  } else if (isAvailable === 'false' || isAvailable === false) {
+    query.isAvailable = false
+  } else {
+    query.isAvailable = true
+  }
 
   if (search) {
     query.$text = { $search: search };

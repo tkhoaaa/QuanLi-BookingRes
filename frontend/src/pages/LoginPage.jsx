@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useForm } from 'react-hook-form'
@@ -12,8 +12,8 @@ import Input from '../components/ui/Input'
 import toast from 'react-hot-toast'
 
 const schema = yup.object({
-  email: yup.string().required('Email la bat buoc').email('Email khong hop le'),
-  password: yup.string().required('Mat khau la bat buoc').min(6, 'Mat khau it nhat 6 ky tu'),
+  email: yup.string().required('Email là bắt buộc').email('Email không hợp lệ'),
+  password: yup.string().required('Mật khẩu là bắt buộc').min(6, 'Mật khẩu ít nhất 6 ký tự'),
 })
 
 export default function LoginPage() {
@@ -22,17 +22,22 @@ export default function LoginPage() {
   const location = useLocation()
   const { loading, isAuthenticated, user } = useSelector((state) => state.auth)
 
+  // Prevent double-fire from React StrictMode
+  const didNavigate = useRef(false)
+
   const from = location.state?.from?.pathname || '/'
 
+  // Only navigate after a login action succeeds — guard against StrictMode mount
   useEffect(() => {
-    if (isAuthenticated) {
-      if (user?.role === 'admin' || user?.role === 'manager') {
-        navigate('/admin', { replace: true })
-      } else if (user?.role === 'shipper') {
-        navigate('/shipper', { replace: true })
-      } else {
-        navigate(from, { replace: true })
-      }
+    if (!isAuthenticated || didNavigate.current) return
+    didNavigate.current = true
+
+    if (user?.role === 'admin' || user?.role === 'manager') {
+      navigate('/admin', { replace: true })
+    } else if (user?.role === 'shipper') {
+      navigate('/shipper', { replace: true })
+    } else {
+      navigate(from, { replace: true })
     }
   }, [isAuthenticated, user, navigate, from])
 
@@ -46,18 +51,14 @@ export default function LoginPage() {
 
   const onSubmit = async (data) => {
     try {
-      const result = await dispatch(login(data)).unwrap()
-      toast.success(`Chao mung ${result.user.name}!`)
-
-      if (result.user.role === 'admin' || result.user.role === 'manager') {
-        navigate('/admin', { replace: true })
-      } else if (result.user.role === 'shipper') {
-        navigate('/shipper', { replace: true })
-      } else {
-        navigate(from, { replace: true })
-      }
+      await dispatch(login(data)).unwrap()
+      toast.success(`Chào mừng ${data.email}!`, {
+        duration: 4000,
+        position: 'top-center',
+      })
+      // Navigation is handled by the useEffect above
     } catch (error) {
-      toast.error(error || 'Dang nhap that bai')
+      toast.error(error || 'Đăng nhập thất bại')
     }
   }
 
@@ -74,8 +75,8 @@ export default function LoginPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-4">
               <ChefHat className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Chao mung tro lai</h1>
-            <p className="text-gray-500 mt-1">Dang nhap vao tai khoan cua ban</p>
+            <h1 className="text-2xl font-bold text-gray-900">Chào mừng trở lại</h1>
+            <p className="text-gray-500 mt-1">Đăng nhập vào tài khoản của bạn</p>
           </div>
 
           {/* Form */}
@@ -88,32 +89,32 @@ export default function LoginPage() {
               error={errors.email?.message}
             />
             <Input
-              label="Mat khau"
+              label="Mật khẩu"
               type="password"
-              placeholder="Nhap mat khau"
+              placeholder="Nhập mật khẩu"
               {...register('password')}
               error={errors.password?.message}
             />
 
             <Button type="submit" className="w-full" loading={loading} icon={LogIn}>
-              Dang nhap
+              Đăng nhập
             </Button>
           </form>
 
           {/* Links */}
           <div className="mt-6 text-center text-sm">
             <p className="text-gray-500">
-              Chua co tai khoan?{' '}
+              Chưa có tài khoản?{' '}
               <Link to="/register" className="text-primary font-medium hover:text-primary-dark">
-                Dang ky ngay
+                Đăng ký ngay
               </Link>
             </p>
             <div className="mt-3 flex justify-center gap-4 text-xs text-gray-400">
               <Link to="/register-admin" className="hover:text-gray-600">
-                Dang ky Quan ly
+                Đăng ký Quản lý
               </Link>
               <Link to="/register-shipper" className="hover:text-gray-600">
-                Dang ky Shipper
+                Đăng ký Shipper
               </Link>
             </div>
           </div>

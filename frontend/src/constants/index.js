@@ -11,14 +11,14 @@ export const ORDER_STATUS = {
 }
 
 export const ORDER_STATUS_COLORS = {
-  pending: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Cho xu ly' },
-  confirmed: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Da xac nhan' },
-  preparing: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Dang chuan bi' },
-  picking: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Dang lay hang' },
-  delivering: { bg: 'bg-cyan-100', text: 'text-cyan-700', label: 'Dang giao' },
-  delivered: { bg: 'bg-green-100', text: 'text-green-700', label: 'Da giao' },
-  cancelled: { bg: 'bg-red-100', text: 'text-red-700', label: 'Da huy' },
-  refunded: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Da hoan tien' },
+  pending: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Chờ xử lý' },
+  confirmed: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Đã xác nhận' },
+  preparing: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Đang chuẩn bị' },
+  picking: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Đang lấy hàng' },
+  delivering: { bg: 'bg-cyan-100', text: 'text-cyan-700', label: 'Đang giao' },
+  delivered: { bg: 'bg-green-100', text: 'text-green-700', label: 'Đã giao' },
+  cancelled: { bg: 'bg-red-100', text: 'text-red-700', label: 'Đã hủy' },
+  refunded: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Đã hoàn tiền' },
 }
 
 export const ORDER_STATUS_TRANSITIONS = {
@@ -53,11 +53,11 @@ export const FULFILLMENT_TYPES = {
 
 // ── Categories ────────────────────────────────────────────
 export const CATEGORIES = [
-  { value: 'mon-chinh', label: 'Mon Chinh' },
-  { value: 'mon-phu', label: 'Mon Phu' },
-  { value: 'do-uong', label: 'Do Uong' },
-  { value: 'trang-mieng', label: 'Trang Mieng' },
-  { value: 'mon-nhanh', label: 'Mon Nhanh' },
+  { value: 'mon-chinh', label: 'Món Chính' },
+  { value: 'mon-phu', label: 'Món Phụ' },
+  { value: 'do-uong', label: 'Đồ Uống' },
+  { value: 'trang-mieng', label: 'Tráng Miệng' },
+  { value: 'mon-nhanh', label: 'Món Nhanh' },
   { value: 'combo', label: 'Combo' },
 ]
 

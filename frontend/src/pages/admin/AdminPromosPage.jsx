@@ -95,15 +95,15 @@ export default function AdminPromosPage() {
 
       if (editingPromo) {
         await axiosClient.put(`/promos/${editingPromo._id}`, payload)
-        toast.success('Cap nhat ma giam gia thanh cong')
+        toast.success('Cập nhật mã giảm giá thành công')
       } else {
         await axiosClient.post('/promos', payload)
-        toast.success('Tao ma giam gia thanh cong')
+        toast.success('Tạo mã giảm giá thành công')
       }
       setIsModalOpen(false)
       fetchPromos()
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Luu that bai')
+      toast.error(error.response?.data?.message || 'Lưu thất bại')
     } finally {
       setFormLoading(false)
     }
@@ -114,11 +114,11 @@ export default function AdminPromosPage() {
     setDeleteLoading(true)
     try {
       await axiosClient.delete(`/promos/${deleteId}`)
-      toast.success('Xoa ma giam gia thanh cong')
+      toast.success('Xóa mã giảm giá thành công')
       setDeleteId(null)
       fetchPromos()
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Xoa that bai')
+      toast.error(error.response?.data?.message || 'Xóa thất bại')
     } finally {
       setDeleteLoading(false)
     }
@@ -129,11 +129,11 @@ export default function AdminPromosPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quan ly ma giam gia</h1>
-          <p className="text-gray-500 text-sm mt-1">{promos.length} ma giam gia</p>
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý mã giảm giá</h1>
+          <p className="text-gray-500 text-sm mt-1">{promos.length} mã giảm giá</p>
         </div>
         <Button onClick={handleCreate} icon={Plus}>
-          Them ma giam gia
+          Tạo mã giảm giá
         </Button>
       </div>
 
@@ -142,7 +142,7 @@ export default function AdminPromosPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="Tim ma giam gia..."
+          placeholder="Tìm mã giảm giá..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -158,9 +158,9 @@ export default function AdminPromosPage() {
         ) : promos.length === 0 ? (
           <EmptyState
             icon={Ticket}
-            title="Chua co ma giam gia nao"
-            description="Tao ma giam gia dau tien de thu hut khach hang"
-            actionLabel="Them ma giam gia"
+            title="Chưa có mã giảm giá nào"
+            description="Tạo mã giảm giá đầu tiên để thu hút khách hàng"
+            actionLabel="Tạo mã giảm giá"
             onAction={handleCreate}
           />
         ) : (
@@ -168,12 +168,12 @@ export default function AdminPromosPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-500 bg-gray-50 border-b">
-                  <th className="px-4 py-3 font-medium">Ma</th>
-                  <th className="px-4 py-3 font-medium">Giam gia</th>
-                  <th className="px-4 py-3 font-medium">Don hang toi thieu</th>
-                  <th className="px-4 py-3 font-medium">Su dung</th>
-                  <th className="px-4 py-3 font-medium">Han su dung</th>
-                  <th className="px-4 py-3 font-medium">Hanh dong</th>
+                  <th className="px-4 py-3 font-medium">Mã</th>
+                  <th className="px-4 py-3 font-medium">Giảm giá</th>
+                  <th className="px-4 py-3 font-medium">Đơn hàng tối thiểu</th>
+                  <th className="px-4 py-3 font-medium">Sử dụng</th>
+                  <th className="px-4 py-3 font-medium">Hạn sử dụng</th>
+                  <th className="px-4 py-3 font-medium">Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,73 +230,85 @@ export default function AdminPromosPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingPromo ? 'Chinh sua ma giam gia' : 'Tao ma giam gia moi'}
+        title={editingPromo ? 'Chỉnh sửa mã giảm giá' : 'Tạo mã giảm giá mới'}
         size="md"
+        footer={
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 order-2 sm:order-1"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              form="promo-form"
+              loading={formLoading}
+              className="flex-1 order-1 sm:order-2"
+            >
+              {editingPromo ? 'Lưu thay đổi' : 'Tạo mã giảm giá'}
+            </Button>
+          </div>
+        }
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form id="promo-form" onSubmit={handleSubmit} className="space-y-4">
           <Input
-            label="Ma giam gia"
+            label="Mã giảm giá"
             value={formData.code}
             onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
             placeholder="VD: SUMMER2026"
             required
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Gia tri giam"
+              label="Giá trị giảm"
               type="number"
               value={formData.discount}
               onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
               required
             />
             <Select
-              label="Loai giam gia"
+              label="Loại giảm giá"
               value={formData.discountType}
               onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
               options={[
-                { value: 'percent', label: 'Phan tram (%)' },
-                { value: 'fixed', label: 'So tien (VND)' },
+                { value: 'percent', label: 'Phần trăm (%)' },
+                { value: 'fixed', label: 'Số tiền (VND)' },
               ]}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Don hang toi thieu (VND)"
+              label="Đơn hàng tối thiểu (VND)"
               type="number"
               value={formData.minOrder}
               onChange={(e) => setFormData({ ...formData, minOrder: e.target.value })}
               placeholder="0"
             />
             <Input
-              label="Giam toi da (VND)"
+              label="Giảm tối đa (VND)"
               type="number"
               value={formData.maxDiscount}
               onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
-              placeholder="Tuy chon"
+              placeholder="Tùy chọn"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="So lan su dung toi da"
+              label="Số lần sử dụng tối đa"
               type="number"
               value={formData.usageLimit}
               onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
-              placeholder="Khong gioi han"
+              placeholder="Không giới hạn"
             />
             <Input
-              label="Han su dung"
+              label="Hạn sử dụng"
               type="date"
               value={formData.expiresAt}
               onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
             />
-          </div>
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} className="flex-1">
-              Huy
-            </Button>
-            <Button type="submit" loading={formLoading} className="flex-1">
-              {editingPromo ? 'Luu thay doi' : 'Tao ma giam gia'}
-            </Button>
           </div>
         </form>
       </Modal>
@@ -305,9 +317,9 @@ export default function AdminPromosPage() {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={confirmDelete}
-        title="Xoa ma giam gia"
-        message="Ban co chac chan muon xoa ma giam gia nay?"
-        confirmLabel="Xoa"
+        title="Xóa mã giảm giá"
+        message="Bạn có chắc chắn muốn xóa mã giảm giá này?"
+        confirmLabel="Xóa"
         loading={deleteLoading}
       />
     </div>

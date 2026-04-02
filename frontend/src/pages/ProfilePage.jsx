@@ -11,17 +11,17 @@ import Input from '../components/ui/Input'
 import toast from 'react-hot-toast'
 
 const profileSchema = yup.object({
-  name: yup.string().required('Ho ten la bat buoc'),
-  phone: yup.string().required('So dien thoai la bat buoc'),
+  name: yup.string().required('Họ tên là bắt buộc'),
+  phone: yup.string().required('Số điện thoại là bắt buộc'),
 })
 
 const passwordSchema = yup.object({
-  currentPassword: yup.string().required('Mat khau hien tai la bat buoc'),
-  newPassword: yup.string().required('Mat khau moi la bat buoc').min(6, 'It nhat 6 ky tu'),
+  currentPassword: yup.string().required('Mật khẩu hiện tại là bắt buộc'),
+  newPassword: yup.string().required('Mật khẩu mới là bắt buộc').min(6, 'Ít nhất 6 ký tự'),
   confirmPassword: yup
     .string()
-    .required('Xac nhan mat khau la bat buoc')
-    .oneOf([yup.ref('newPassword')], 'Mat khau khong khop'),
+    .required('Xác nhận mật khẩu là bắt buộc')
+    .oneOf([yup.ref('newPassword')], 'Mật khẩu không khớp'),
 })
 
 export default function ProfilePage() {
@@ -46,9 +46,9 @@ export default function ProfilePage() {
     setLoading(true)
     try {
       await dispatch(updateProfile(data)).unwrap()
-      toast.success('Cap nhat thong tin thanh cong!')
+      toast.success('Cập nhật thông tin thành công!')
     } catch (error) {
-      toast.error(error || 'Cap nhat that bai')
+      toast.error(error || 'Cập nhật thất bại')
     } finally {
       setLoading(false)
     }
@@ -61,25 +61,25 @@ export default function ProfilePage() {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       })).unwrap()
-      toast.success('Doi mat khau thanh cong!')
+      toast.success('Đổi mật khẩu thành công!')
       passwordForm.reset()
     } catch (error) {
-      toast.error(error || 'Doi mat khau that bai')
+      toast.error(error || 'Đổi mật khẩu thất bại')
     } finally {
       setLoading(false)
     }
   }
 
   const tabs = [
-    { key: 'profile', label: 'Thong tin ca nhan', icon: User },
-    { key: 'password', label: 'Doi mat khau', icon: Lock },
-    { key: 'addresses', label: 'Dia chi', icon: MapPin },
+    { key: 'profile', label: 'Thông tin cá nhân', icon: User },
+    { key: 'password', label: 'Đổi mật khẩu', icon: Lock },
+    { key: 'addresses', label: 'Địa chỉ', icon: MapPin },
   ]
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Tai khoan cua toi</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Tài khoản của tôi</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Sidebar */}
@@ -122,10 +122,10 @@ export default function ProfilePage() {
             >
               {activeTab === 'profile' && (
                 <>
-                  <h2 className="font-semibold text-gray-900 mb-4">Thong tin ca nhan</h2>
+                  <h2 className="font-semibold text-gray-900 mb-4">Thông tin cá nhân</h2>
                   <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)} className="space-y-4 max-w-md">
                     <Input
-                      label="Ho va ten"
+                      label="Họ và tên"
                       {...profileForm.register('name')}
                       error={profileForm.formState.errors.name?.message}
                     />
@@ -136,45 +136,45 @@ export default function ProfilePage() {
                       disabled
                     />
                     <Input
-                      label="So dien thoai"
+                      label="Số điện thoại"
                       {...profileForm.register('phone')}
                       error={profileForm.formState.errors.phone?.message}
                     />
-                    <Button type="submit" loading={loading}>Luu thay doi</Button>
+                    <Button type="submit" loading={loading}>Lưu thay đổi</Button>
                   </form>
                 </>
               )}
 
               {activeTab === 'password' && (
                 <>
-                  <h2 className="font-semibold text-gray-900 mb-4">Doi mat khau</h2>
+                  <h2 className="font-semibold text-gray-900 mb-4">Đổi mật khẩu</h2>
                   <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-4 max-w-md">
                     <Input
-                      label="Mat khau hien tai"
+                      label="Mật khẩu hiện tại"
                       type="password"
                       {...passwordForm.register('currentPassword')}
                       error={passwordForm.formState.errors.currentPassword?.message}
                     />
                     <Input
-                      label="Mat khau moi"
+                      label="Mật khẩu mới"
                       type="password"
                       {...passwordForm.register('newPassword')}
                       error={passwordForm.formState.errors.newPassword?.message}
                     />
                     <Input
-                      label="Xac nhan mat khau moi"
+                      label="Xác nhận mật khẩu mới"
                       type="password"
                       {...passwordForm.register('confirmPassword')}
                       error={passwordForm.formState.errors.confirmPassword?.message}
                     />
-                    <Button type="submit" loading={loading}>Doi mat khau</Button>
+                    <Button type="submit" loading={loading}>Đổi mật khẩu</Button>
                   </form>
                 </>
               )}
 
               {activeTab === 'addresses' && (
                 <>
-                  <h2 className="font-semibold text-gray-900 mb-4">Dia chi giao hang</h2>
+                  <h2 className="font-semibold text-gray-900 mb-4">Địa chỉ giao hàng</h2>
                   {user?.addresses?.length > 0 ? (
                     <div className="space-y-3">
                       {user.addresses.map((addr, i) => (
@@ -183,14 +183,14 @@ export default function ProfilePage() {
                             <p className="font-medium text-gray-900">{addr.label}</p>
                             <p className="text-sm text-gray-500">{addr.fullAddress}</p>
                             {addr.isDefault && (
-                              <span className="text-xs text-primary font-medium">Mac dinh</span>
+                              <span className="text-xs text-primary font-medium">Mặc định</span>
                             )}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">Chua co dia chi nao duoc luu.</p>
+                    <p className="text-sm text-gray-500">Chưa có địa chỉ nào được lưu.</p>
                   )}
                 </>
               )}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useForm } from 'react-hook-form'
@@ -12,23 +12,28 @@ import Input from '../components/ui/Input'
 import toast from 'react-hot-toast'
 
 const schema = yup.object({
-  name: yup.string().required('Ho ten la bat buoc').min(2, 'Ten it nhat 2 ky tu'),
-  email: yup.string().required('Email la bat buoc').email('Email khong hop le'),
-  phone: yup.string().required('So dien thoai la bat buoc').matches(/^[0-9]{9,11}$/, 'So dien thoai khong hop le'),
-  password: yup.string().required('Mat khau la bat buoc').min(6, 'Mat khau it nhat 6 ky tu'),
+  name: yup.string().required('Họ tên là bắt buộc').min(2, 'Tên ít nhất 2 ký tự'),
+  email: yup.string().required('Email là bắt buộc').email('Email không hợp lệ'),
+  phone: yup.string().required('Số điện thoại là bắt buộc').matches(/^[0-9]{9,11}$/, 'Số điện thoại không hợp lệ'),
+  password: yup.string().required('Mật khẩu là bắt buộc').min(6, 'Mật khẩu ít nhất 6 ký tự'),
   confirmPassword: yup
     .string()
-    .required('Xac nhan mat khau la bat buoc')
-    .oneOf([yup.ref('password')], 'Mat khau khong khop'),
+    .required('Xác nhận mật khẩu là bắt buộc')
+    .oneOf([yup.ref('password')], 'Mật khẩu không khớp'),
 })
 
 export default function RegisterPage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { loading, isAuthenticated } = useSelector((state) => state.auth)
+  const didNavigate = useRef(false)
 
+  // Navigation handled by useEffect to ensure toast renders first
   useEffect(() => {
-    if (isAuthenticated) navigate('/')
+    if (!isAuthenticated || didNavigate.current) return
+    didNavigate.current = true
+    toast.success('Đăng ký thành công!')
+    navigate('/', { replace: true })
   }, [isAuthenticated, navigate])
 
   const {
@@ -41,7 +46,7 @@ export default function RegisterPage() {
 
   const onSubmit = async (data) => {
     try {
-      const result = await dispatch(
+      await dispatch(
         register({
           name: data.name,
           email: data.email,
@@ -50,10 +55,9 @@ export default function RegisterPage() {
           role: 'customer',
         })
       ).unwrap()
-      toast.success(`Dang ky thanh cong! Chao mung ${result.user.name}!`)
-      navigate('/')
+      // Navigation is handled by the useEffect above
     } catch (error) {
-      toast.error(error || 'Dang ky that bai')
+      toast.error(error || 'Đăng ký thất bại')
     }
   }
 
@@ -70,14 +74,14 @@ export default function RegisterPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-2xl mb-4">
               <ChefHat className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Tao tai khoan moi</h1>
-            <p className="text-gray-500 mt-1">Dang ky de dat mon ngay</p>
+            <h1 className="text-2xl font-bold text-gray-900">Tạo tài khoản mới</h1>
+            <p className="text-gray-500 mt-1">Đăng ký để đặt món ngay</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input
-              label="Ho va ten"
+              label="Họ và tên"
               placeholder="Nguyen Van A"
               {...formRegister('name')}
               error={errors.name?.message}
@@ -90,36 +94,36 @@ export default function RegisterPage() {
               error={errors.email?.message}
             />
             <Input
-              label="So dien thoai"
+              label="Số điện thoại"
               placeholder="09xxxxxxxx"
               {...formRegister('phone')}
               error={errors.phone?.message}
             />
             <Input
-              label="Mat khau"
+              label="Mật khẩu"
               type="password"
-              placeholder="It nhat 6 ky tu"
+              placeholder="Ít nhất 6 ký tự"
               {...formRegister('password')}
               error={errors.password?.message}
             />
             <Input
-              label="Xac nhan mat khau"
+              label="Xác nhận mật khẩu"
               type="password"
-              placeholder="Nhap lai mat khau"
+              placeholder="Nhập lại mật khẩu"
               {...formRegister('confirmPassword')}
               error={errors.confirmPassword?.message}
             />
 
             <Button type="submit" className="w-full" loading={loading} icon={UserPlus}>
-              Dang ky
+              Đăng ký
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm">
             <p className="text-gray-500">
-              Da co tai khoan?{' '}
+              Đã có tài khoản?{' '}
               <Link to="/login" className="text-primary font-medium hover:text-primary-dark">
-                Dang nhap
+                Đăng nhập
               </Link>
             </p>
           </div>

@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
-import { Star, Minus, Plus, ShoppingCart, Heart, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Star, Minus, Plus, ShoppingCart, ChevronLeft, ChevronRight, Flame } from 'lucide-react'
 import { fetchFoodById, clearCurrentFood } from '../slices/foodsSlice'
 import { addItem, selectCartItems } from '../slices/cartSlice'
-import { formatCurrency, cn } from '../lib/utils'
+import { formatCurrency, cn, resolveFoodImage } from '../lib/utils'
 import Button from '../components/ui/Button'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import toast from 'react-hot-toast'
@@ -37,7 +37,7 @@ export default function FoodDetailPage() {
 
   if (loading || !currentFood) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-cream">
         <LoadingSpinner size="lg" />
       </div>
     )
@@ -57,7 +57,7 @@ export default function FoodDetailPage() {
 
   const handleAddToCart = () => {
     if (!isAuthenticated) {
-      toast.error('Vui long dang nhap de them mon vao gio hang')
+      toast.error('Vui lòng đăng nhập để thêm món vào giỏ hàng')
       navigate('/login')
       return
     }
@@ -69,7 +69,7 @@ export default function FoodDetailPage() {
         toppings: selectedToppings,
       })
     )
-    toast.success(`Da them ${currentFood.name} (x${quantity}) vao gio hang`)
+    toast.success(`Đã thêm ${currentFood.name} (x${quantity}) vào giỏ hàng`)
   }
 
   const discountPercent = currentFood.discount
@@ -78,60 +78,69 @@ export default function FoodDetailPage() {
 
   const images = currentFood.images?.length
     ? currentFood.images
-    : [currentFood.image || 'https://via.placeholder.com/500']
+    : currentFood.image ? [currentFood.image] : []
 
-  const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length)
-  const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
+  // Resolve all image URLs with API base prefix
+  const resolvedImages = images.length > 0
+    ? images.map((img) => resolveFoodImage([img], 'https://via.placeholder.com/600?text=Food'))
+    : ['https://via.placeholder.com/600?text=Food']
+
+  const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % resolvedImages.length)
+  const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + resolvedImages.length) % resolvedImages.length)
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-cream py-8">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Gallery */}
           <div className="relative">
             <motion.div
               key={currentImageIndex}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="aspect-square rounded-2xl overflow-hidden bg-gray-200"
+              transition={{ duration: 0.3 }}
+              className="aspect-square rounded-2xl overflow-hidden bg-charcoal-100 shadow-card"
             >
               <img
-                src={images[currentImageIndex]}
+                src={resolvedImages[currentImageIndex]}
                 alt={currentFood.name}
                 className="w-full h-full object-cover"
               />
             </motion.div>
+
             {images.length > 1 && (
               <>
                 <button
                   onClick={prevImage}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-5 h-5 text-charcoal-700" />
                 </button>
                 <button
                   onClick={nextImage}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  <ChevronRight className="w-5 h-5 text-charcoal-700" />
                 </button>
               </>
             )}
+
             {discountPercent > 0 && (
-              <span className="absolute top-4 left-4 bg-red-500 text-white font-bold px-3 py-1 rounded-full text-sm">
-                -{discountPercent}%
+              <span className="absolute top-4 left-4 bg-secondary text-white font-bold px-3 py-1 rounded-full text-sm shadow-sm flex items-center gap-1">
+                <Flame className="w-3.5 h-3.5" /> -{discountPercent}%
               </span>
             )}
+
             {/* Thumbnail dots */}
-            {images.length > 1 && (
+            {resolvedImages.length > 1 && (
               <div className="flex justify-center gap-2 mt-4">
-                {images.map((_, i) => (
+                {resolvedImages.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentImageIndex(i)}
                     className={cn(
-                      'w-2 h-2 rounded-full transition-colors',
-                      i === currentImageIndex ? 'bg-primary' : 'bg-gray-300'
+                      'w-2.5 h-2.5 rounded-full transition-all',
+                      i === currentImageIndex ? 'bg-primary w-6' : 'bg-charcoal-200 hover:bg-charcoal-300'
                     )}
                   />
                 ))}
@@ -143,77 +152,88 @@ export default function FoodDetailPage() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-6"
+            transition={{ duration: 0.4 }}
+            className="space-y-5"
           >
+            {/* Category badge */}
             <div>
-              <span className="text-sm text-primary font-medium uppercase tracking-wide">
+              <span className="inline-flex items-center px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full uppercase tracking-wide">
                 {currentFood.categoryName || currentFood.category}
               </span>
-              <h1 className="text-3xl font-bold text-gray-900 mt-1">{currentFood.name}</h1>
-              <div className="flex items-center gap-2 mt-2">
-                {currentFood.rating > 0 && (
-                  <>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={cn(
-                            'w-4 h-4',
-                            i < Math.floor(currentFood.rating)
-                              ? 'text-yellow-400 fill-yellow-400'
-                              : 'text-gray-300'
-                          )}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-sm text-gray-500">
-                      ({currentFood.rating.toFixed(1)}) - {currentFood.reviewCount || 0} danh gia
-                    </span>
-                  </>
-                )}
-              </div>
+            </div>
+
+            {/* Title & Rating */}
+            <div>
+              <h1 className="text-3xl lg:text-4xl font-bold text-charcoal-900 font-heading leading-tight">
+                {currentFood.name}
+              </h1>
+              {currentFood.rating > 0 && (
+                <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={cn(
+                          'w-4 h-4',
+                          i < Math.floor(currentFood.rating)
+                            ? 'text-amber-400 fill-amber-400'
+                            : 'text-charcoal-200'
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold text-charcoal-900">
+                    {currentFood.rating.toFixed(1)}
+                  </span>
+                  <span className="text-sm text-charcoal-500">
+                    ({currentFood.reviewCount || 0} đánh giá)
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Price */}
-            <div>
+            <div className="bg-white rounded-xl p-4 shadow-sm">
               {currentFood.discount ? (
                 <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-bold text-primary">
+                  <span className="text-4xl font-bold text-secondary font-heading">
                     {formatCurrency(currentFood.discountPrice)}
                   </span>
-                  <span className="text-xl text-gray-400 line-through">
+                  <span className="text-xl text-charcoal-400 line-through">
                     {formatCurrency(currentFood.price)}
                   </span>
                 </div>
               ) : (
-                <span className="text-3xl font-bold text-primary">
+                <span className="text-4xl font-bold text-secondary font-heading">
                   {formatCurrency(currentFood.price)}
                 </span>
               )}
             </div>
 
             {/* Description */}
-            <p className="text-gray-600 leading-relaxed">{currentFood.description}</p>
+            <p className="text-charcoal-600 leading-relaxed text-base">
+              {currentFood.description}
+            </p>
 
             {/* Variants */}
             {currentFood.variants?.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Kich thuoc</h3>
-                <div className="flex gap-2">
+              <div className="bg-white rounded-xl p-4 shadow-sm">
+                <h3 className="font-semibold text-charcoal-900 mb-3">Kích thước</h3>
+                <div className="flex flex-wrap gap-2">
                   {currentFood.variants.map((variant) => (
                     <button
                       key={variant._id || variant.name}
                       onClick={() => setSelectedVariant(variant)}
                       className={cn(
-                        'px-4 py-2 rounded-lg border text-sm font-medium transition-colors',
+                        'px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all',
                         selectedVariant?.name === variant.name
-                          ? 'border-primary bg-primary text-white'
-                          : 'border-gray-200 hover:border-primary'
+                          ? 'border-primary bg-primary text-white shadow-sm'
+                          : 'border-charcoal-200 text-charcoal-700 hover:border-primary hover:bg-primary/5'
                       )}
                     >
                       {variant.name}
                       {variant.price > 0 && (
-                        <span className="ml-1 text-xs opacity-70">
+                        <span className="ml-1 text-xs opacity-75">
                           +{formatCurrency(variant.price)}
                         </span>
                       )}
@@ -225,8 +245,8 @@ export default function FoodDetailPage() {
 
             {/* Toppings */}
             {currentFood.toppings?.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Topping</h3>
+              <div className="bg-white rounded-xl p-4 shadow-sm">
+                <h3 className="font-semibold text-charcoal-900 mb-3">Topping</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {currentFood.toppings.map((topping) => {
                     const selected = selectedToppings.find((t) => t._id === topping._id)
@@ -235,14 +255,14 @@ export default function FoodDetailPage() {
                         key={topping._id || topping.name}
                         onClick={() => toggleTopping(topping)}
                         className={cn(
-                          'flex items-center justify-between px-3 py-2 rounded-lg border text-sm transition-colors',
+                          'flex items-center justify-between px-3 py-2.5 rounded-xl border-2 text-sm font-medium transition-all',
                           selected
-                            ? 'border-primary bg-primary/5 text-primary'
-                            : 'border-gray-200 hover:border-primary'
+                            ? 'border-primary bg-primary text-white shadow-sm'
+                            : 'border-charcoal-200 text-charcoal-700 hover:border-primary hover:bg-primary/5'
                         )}
                       >
                         <span>{topping.name}</span>
-                        <span className="text-xs font-medium">
+                        <span className={cn('text-xs font-semibold', selected ? 'text-white/80' : 'text-primary')}>
                           +{formatCurrency(topping.price)}
                         </span>
                       </button>
@@ -252,34 +272,43 @@ export default function FoodDetailPage() {
               </div>
             )}
 
-            {/* Quantity */}
-            <div className="flex items-center gap-4">
-              <span className="font-semibold text-gray-900">So luong</span>
-              <div className="flex items-center border border-gray-200 rounded-lg">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-2 hover:bg-gray-100 transition-colors"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="w-12 text-center font-medium">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="p-2 hover:bg-gray-100 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+            {/* Quantity + Add to cart */}
+            <div className="bg-white rounded-xl p-4 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-charcoal-900">Số lượng</span>
+                <div className="flex items-center border-2 border-charcoal-200 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="w-10 h-10 flex items-center justify-center hover:bg-charcoal-50 transition-colors"
+                  >
+                    <Minus className="w-4 h-4 text-charcoal-600" />
+                  </button>
+                  <span className="w-12 text-center font-semibold text-charcoal-900">{quantity}</span>
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="w-10 h-10 flex items-center justify-center hover:bg-charcoal-50 transition-colors"
+                  >
+                    <Plus className="w-4 h-4 text-charcoal-600" />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Add to cart */}
-            <div className="flex gap-3 pt-4 border-t">
-              <Button onClick={handleAddToCart} size="lg" className="flex-1" icon={ShoppingCart}>
-                Them vao gio hang
-              </Button>
-              <span className="text-2xl font-bold text-primary flex items-center">
-                {formatCurrency(totalPrice)}
-              </span>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleAddToCart}
+                  className="flex-1"
+                  icon={ShoppingCart}
+                  size="lg"
+                >
+                  Thêm vào giỏ hàng
+                </Button>
+                <div className="flex-shrink-0 px-4 py-3 bg-secondary/10 rounded-xl text-center">
+                  <p className="text-xs text-charcoal-500">Tổng cộng</p>
+                  <p className="text-xl font-bold text-secondary font-heading">
+                    {formatCurrency(totalPrice)}
+                  </p>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>

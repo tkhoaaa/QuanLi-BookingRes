@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
 import { useSelector, useDispatch } from 'react-redux'
 import { selectCartItems, removeItem, updateQuantity, selectCartTotal } from '../../slices/cartSlice'
-import { formatCurrency } from '../../lib/utils'
+import { formatCurrency, resolveFoodImage } from '../../lib/utils'
 import Button from './Button'
 
 export default function CartSidebar({ isOpen, onClose }) {
@@ -36,7 +36,7 @@ export default function CartSidebar({ isOpen, onClose }) {
             <div className="flex items-center justify-between px-4 py-4 border-b">
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-primary" />
-                <h2 className="font-semibold text-gray-900">Gio hang ({items.length})</h2>
+                <h2 className="font-semibold text-gray-900">Giỏ hàng ({items.length})</h2>
               </div>
               <button
                 onClick={onClose}
@@ -51,9 +51,9 @@ export default function CartSidebar({ isOpen, onClose }) {
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <ShoppingBag className="w-16 h-16 text-gray-200 mb-3" />
-                  <p className="text-gray-500">Gio hang trong</p>
+                  <p className="text-gray-500">Giỏ hàng trống</p>
                   <Button onClick={onClose} className="mt-3" variant="outline" size="sm">
-                    Tiep tuc mua sam
+                    Tiếp tục mua sắm
                   </Button>
                 </div>
               ) : (
@@ -61,7 +61,7 @@ export default function CartSidebar({ isOpen, onClose }) {
                   {items.map((item, index) => (
                     <div key={`${item.food._id}-${item.variantStr}-${item.toppingsStr}`} className="p-4 flex gap-3">
                       <img
-                        src={item.food.image || 'https://via.placeholder.com/80'}
+                        src={resolveFoodImage(item.food.images, 'https://via.placeholder.com/80?text=Food')}
                         alt={item.food.name}
                         className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                       />
@@ -122,7 +122,7 @@ export default function CartSidebar({ isOpen, onClose }) {
             {items.length > 0 && (
               <div className="border-t px-4 py-4 space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Tam tinh</span>
+                  <span className="text-gray-500">Tạm tính</span>
                   <span className="font-semibold text-gray-900">{formatCurrency(total)}</span>
                 </div>
                 <Link
@@ -130,7 +130,7 @@ export default function CartSidebar({ isOpen, onClose }) {
                   onClick={onClose}
                   className="block w-full"
                 >
-                  <Button className="w-full">Thanh toan</Button>
+                  <Button className="w-full">Thanh toán</Button>
                 </Link>
               </div>
             )}

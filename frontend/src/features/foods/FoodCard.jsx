@@ -3,32 +3,42 @@ import { motion } from 'framer-motion'
 import { Star, ShoppingCart, Heart } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { addItem } from '../../slices/cartSlice'
-import { formatCurrency, cn } from '../../lib/utils'
+import { addToWishlist, removeFromWishlist } from '../../slices/wishlistSlice'
+import { formatCurrency, cn, resolveFoodImage } from '../../lib/utils'
 import toast from 'react-hot-toast'
 
-export default function FoodCard({ food, className, onWishlistToggle, isWishlisted = false }) {
+export default function FoodCard({ food, className }) {
   const dispatch = useDispatch()
   const { isAuthenticated } = useSelector((state) => state.auth)
+  const wishlistIds = useSelector((state) => state.wishlist.ids)
+
+  const isWishlisted = wishlistIds.includes(food._id)
 
   const handleAddToCart = (e) => {
     e.preventDefault()
     e.stopPropagation()
     if (!isAuthenticated) {
-      toast.error('Vui long dang nhap de them mon vao gio hang')
+      toast.error('Vui lòng đăng nhập để thêm món vào giỏ hàng')
       return
     }
     dispatch(addItem({ food, quantity: 1, variant: null, toppings: [] }))
-    toast.success(`Da them ${food.name} vao gio hang`)
+    toast.success(`Đã thêm ${food.name} vào giỏ hàng`)
   }
 
   const handleWishlist = (e) => {
     e.preventDefault()
     e.stopPropagation()
     if (!isAuthenticated) {
-      toast.error('Vui long dang nhap')
+      toast.error('Vui lòng đăng nhập để lưu món yêu thích')
       return
     }
-    onWishlistToggle?.(food._id)
+    if (isWishlisted) {
+      dispatch(removeFromWishlist(food._id))
+      toast.success('Đã xóa khỏi danh sách yêu thích')
+    } else {
+      dispatch(addToWishlist(food._id))
+      toast.success('Đã thêm vào danh sách yêu thích')
+    }
   }
 
   const discountPercent = food.discount
@@ -47,7 +57,7 @@ export default function FoodCard({ food, className, onWishlistToggle, isWishlist
         {/* Image */}
         <div className="relative aspect-square overflow-hidden bg-gray-100">
           <img
-            src={food.image || 'https://via.placeholder.com/300'}
+            src={resolveFoodImage(food.images, 'https://via.placeholder.com/300?text=Food')}
             alt={food.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />

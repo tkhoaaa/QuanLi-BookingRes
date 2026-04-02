@@ -6,6 +6,11 @@ const initialState = {
   currentOrder: null,
   loading: false,
   error: null,
+  pagination: {
+    total: 0,
+    page: 1,
+    totalPages: 1,
+  },
 }
 
 export const createOrder = createAsyncThunk(
@@ -84,7 +89,7 @@ export const fetchAllOrders = createAsyncThunk(
       if (params.status) query.append('status', params.status)
       if (params.search) query.append('search', params.search)
 
-      const res = await axiosClient.get(`/orders/all?${query.toString()}`)
+      const res = await axiosClient.get(`/admin/orders?${query.toString()}`)
       return res.data.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch orders')
@@ -211,6 +216,7 @@ const ordersSlice = createSlice({
     builder.addCase(fetchAllOrders.fulfilled, (state, action) => {
       state.loading = false
       state.orders = action.payload.orders || []
+      state.pagination = action.payload.pagination || { total: 0, page: 1, totalPages: 1 }
     })
     builder.addCase(fetchAllOrders.rejected, (state, action) => {
       state.loading = false

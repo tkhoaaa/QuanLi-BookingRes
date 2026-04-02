@@ -15,17 +15,18 @@ import {
   Bell,
   ChevronDown,
   ChefHat,
+  User,
 } from 'lucide-react'
 import { logout } from '../slices/authSlice'
 import { selectUnreadCount } from '../slices/notificationsSlice'
 
 const sidebarLinks = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { to: '/admin/foods', label: 'Mon an', icon: UtensilsCrossed },
-  { to: '/admin/orders', label: 'Don hang', icon: ShoppingBag },
-  { to: '/admin/users', label: 'Nguoi dung', icon: Users },
-  { to: '/admin/promos', label: 'Ma giam gia', icon: Ticket },
-  { to: '/admin/branches', label: 'Chi nhanh', icon: MapPin },
+  { to: '/admin/foods', label: 'Món ăn', icon: UtensilsCrossed },
+  { to: '/admin/orders', label: 'Đơn hàng', icon: ShoppingBag },
+  { to: '/admin/users', label: 'Người dùng', icon: Users },
+  { to: '/admin/promos', label: 'Mã giảm giá', icon: Ticket },
+  { to: '/admin/branches', label: 'Chi nhánh', icon: MapPin },
 ]
 
 export default function AdminLayout() {
@@ -104,7 +105,7 @@ export default function AdminLayout() {
             className="flex items-center gap-3 px-3 py-2 text-charcoal-300 hover:bg-charcoal-800 hover:text-white rounded-lg transition-colors"
           >
             <ChefHat className="w-5 h-5 flex-shrink-0" />
-            {sidebarOpen && <span className="text-sm whitespace-nowrap">Ve trang chu</span>}
+            {sidebarOpen && <span className="text-sm whitespace-nowrap">Về trang chủ</span>}
           </Link>
         </div>
       </aside>
@@ -161,7 +162,7 @@ export default function AdminLayout() {
                     onClick={() => setUserMenuOpen(false)}
                   >
                     <User className="w-4 h-4" />
-                    Tai khoan
+                    Tài khoản
                   </Link>
                   <div className="border-t border-charcoal-100 mt-1 pt-1">
                     <button
@@ -169,7 +170,7 @@ export default function AdminLayout() {
                       className="flex items-center gap-2 w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
-                      Dang xuat
+                      Đăng xuất
                     </button>
                   </div>
                 </div>

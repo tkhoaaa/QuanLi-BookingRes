@@ -1,6 +1,21 @@
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+/**
+ * Resolve food image URL from the images array or legacy single image field.
+ * Handles both /uploads/... paths (needs API base prefix) and external URLs.
+ */
+export function resolveFoodImage(images, fallback = 'https://via.placeholder.com/300?text=Food') {
+  const arr = Array.isArray(images) ? images : images ? [images] : []
+  const url = arr[0] || fallback
+  if (url.startsWith('/uploads/')) {
+    return `${API_BASE}${url}`
+  }
+  return url
+}
+
 /**
  * Merge class names with tailwind-merge
  */

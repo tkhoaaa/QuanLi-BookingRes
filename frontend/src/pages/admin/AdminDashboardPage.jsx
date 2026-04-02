@@ -44,7 +44,7 @@ export default function AdminDashboardPage() {
 
   const statCards = [
     {
-      label: 'Tong doanh thu',
+      label: 'Tổng doanh thu',
       value: formatCurrency(stats.totalRevenue),
       icon: DollarSign,
       color: 'text-green-600',
@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
       trendUp: true,
     },
     {
-      label: 'Don hang',
+      label: 'Đơn hàng',
       value: stats.totalOrders.toLocaleString(),
       icon: ShoppingBag,
       color: 'text-blue-600',
@@ -62,14 +62,14 @@ export default function AdminDashboardPage() {
       trendUp: true,
     },
     {
-      label: 'Nguoi dung',
+      label: 'Người dùng',
       value: stats.totalUsers.toLocaleString(),
       icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
     },
     {
-      label: 'Mon an',
+      label: 'Món ăn',
       value: stats.totalFoods.toLocaleString(),
       icon: UtensilsCrossed,
       color: 'text-orange-600',
@@ -82,7 +82,7 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Tong quan he thong ngay hom nay</p>
+        <p className="text-gray-500 text-sm mt-1">Tổng quan hệ thống ngày hôm nay</p>
       </div>
 
       {/* Stats Cards */}
@@ -125,7 +125,7 @@ export default function AdminDashboardPage() {
           className="bg-white rounded-xl p-6 shadow-sm"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Doanh thu 7 ngay qua</h2>
+            <h2 className="font-semibold text-gray-900">Doanh thu 7 ngày qua</h2>
             <TrendingUp className="w-5 h-5 text-green-500" />
           </div>
           <ResponsiveContainer width="100%" height={250}>
@@ -153,7 +153,7 @@ export default function AdminDashboardPage() {
           className="bg-white rounded-xl p-6 shadow-sm"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Don hang 7 ngay qua</h2>
+            <h2 className="font-semibold text-gray-900">Đơn hàng 7 ngày qua</h2>
             <ShoppingBag className="w-5 h-5 text-blue-500" />
           </div>
           <ResponsiveContainer width="100%" height={250}>
@@ -182,23 +182,23 @@ export default function AdminDashboardPage() {
         transition={{ delay: 0.4 }}
         className="bg-white rounded-xl p-6 shadow-sm"
       >
-        <h2 className="font-semibold text-gray-900 mb-4">Don hang gan day</h2>
+        <h2 className="font-semibold text-gray-900 mb-4">Đơn hàng gần đây</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-gray-500 border-b">
-                <th className="pb-3 font-medium">Ma don</th>
-                <th className="pb-3 font-medium">Khach hang</th>
-                <th className="pb-3 font-medium">Tong tien</th>
-                <th className="pb-3 font-medium">Trang thai</th>
-                <th className="pb-3 font-medium">Ngay dat</th>
+                <th className="pb-3 font-medium">Mã đơn</th>
+                <th className="pb-3 font-medium">Khách hàng</th>
+                <th className="pb-3 font-medium">Tổng tiền</th>
+                <th className="pb-3 font-medium">Trạng thái</th>
+                <th className="pb-3 font-medium">Ngày đặt</th>
               </tr>
             </thead>
             <tbody>
               {orders.slice(0, 5).map((order) => (
                 <tr key={order._id} className="border-b border-gray-50">
                   <td className="py-3 font-medium text-gray-900">#{order._id?.slice(-8).toUpperCase()}</td>
-                  <td className="py-3 text-gray-600">{order.fullName || order.user?.name || 'Khach'}</td>
+                  <td className="py-3 text-gray-600">{order.fullName || order.user?.name || 'Khách'}</td>
                   <td className="py-3 text-primary font-medium">{formatCurrency(order.total)}</td>
                   <td className="py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -218,7 +218,7 @@ export default function AdminDashboardPage() {
               {orders.length === 0 && (
                 <tr>
                   <td colSpan={5} className="py-8 text-center text-gray-400">
-                    Chua co don hang nao
+                    Chưa có đơn hàng nào
                   </td>
                 </tr>
               )}

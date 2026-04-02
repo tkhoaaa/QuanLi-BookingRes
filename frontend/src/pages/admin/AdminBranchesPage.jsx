@@ -75,15 +75,15 @@ export default function AdminBranchesPage() {
     try {
       if (editingBranch) {
         await axiosClient.put(`/branches/${editingBranch._id}`, formData)
-        toast.success('Cap nhat chi nhanh thanh cong')
+        toast.success('Cập nhật chi nhánh thành công')
       } else {
         await axiosClient.post('/branches', formData)
-        toast.success('Tao chi nhanh thanh cong')
+        toast.success('Tạo chi nhánh thành công')
       }
       setIsModalOpen(false)
       fetchBranches()
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Luu that bai')
+      toast.error(error.response?.data?.message || 'Lưu thất bại')
     } finally {
       setFormLoading(false)
     }
@@ -94,11 +94,11 @@ export default function AdminBranchesPage() {
     setDeleteLoading(true)
     try {
       await axiosClient.delete(`/branches/${deleteId}`)
-      toast.success('Xoa chi nhanh thanh cong')
+      toast.success('Xóa chi nhánh thành công')
       setDeleteId(null)
       fetchBranches()
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Xoa that bai')
+      toast.error(error.response?.data?.message || 'Xóa thất bại')
     } finally {
       setDeleteLoading(false)
     }
@@ -109,11 +109,11 @@ export default function AdminBranchesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quan ly chi nhanh</h1>
-          <p className="text-gray-500 text-sm mt-1">{branches.length} chi nhanh</p>
+          <h1 className="text-2xl font-bold text-gray-900">Quản lý chi nhánh</h1>
+          <p className="text-gray-500 text-sm mt-1">{branches.length} chi nhánh</p>
         </div>
         <Button onClick={handleCreate} icon={Plus}>
-          Them chi nhanh
+          Thêm chi nhánh
         </Button>
       </div>
 
@@ -122,7 +122,7 @@ export default function AdminBranchesPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="Tim chi nhanh..."
+          placeholder="Tìm chi nhánh..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -138,9 +138,9 @@ export default function AdminBranchesPage() {
         ) : branches.length === 0 ? (
           <EmptyState
             icon={MapPin}
-            title="Chua co chi nhanh nao"
-            description="Them chi nhanh dau tien cua ban"
-            actionLabel="Them chi nhanh"
+            title="Chưa có chi nhánh nào"
+            description="Thêm chi nhánh đầu tiên của bạn"
+            actionLabel="Thêm chi nhánh"
             onAction={handleCreate}
           />
         ) : (
@@ -148,12 +148,12 @@ export default function AdminBranchesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-500 bg-gray-50 border-b">
-                  <th className="px-4 py-3 font-medium">Ten chi nhanh</th>
-                  <th className="px-4 py-3 font-medium">Dia chi</th>
-                  <th className="px-4 py-3 font-medium">Dien thoai</th>
+                  <th className="px-4 py-3 font-medium">Tên chi nhánh</th>
+                  <th className="px-4 py-3 font-medium">Địa chỉ</th>
+                  <th className="px-4 py-3 font-medium">Điện thoại</th>
                   <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Trang thai</th>
-                  <th className="px-4 py-3 font-medium">Hanh dong</th>
+                  <th className="px-4 py-3 font-medium">Trạng thái</th>
+                  <th className="px-4 py-3 font-medium">Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -172,7 +172,7 @@ export default function AdminBranchesPage() {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         branch.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                       }`}>
-                        {branch.isActive ? 'Hoat dong' : 'Tam ngung'}
+                        {branch.isActive ? 'Hoạt động' : 'Tạm ngừng'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -203,27 +203,47 @@ export default function AdminBranchesPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingBranch ? 'Chinh sua chi nhanh' : 'Tao chi nhanh moi'}
+        title={editingBranch ? 'Chỉnh sửa chi nhánh' : 'Tạo chi nhánh mới'}
         size="md"
+        footer={
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1 order-2 sm:order-1"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              form="branch-form"
+              loading={formLoading}
+              className="flex-1 order-1 sm:order-2"
+            >
+              {editingBranch ? 'Lưu thay đổi' : 'Tạo chi nhánh'}
+            </Button>
+          </div>
+        }
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form id="branch-form" onSubmit={handleSubmit} className="space-y-4">
           <Input
-            label="Ten chi nhanh"
+            label="Tên chi nhánh"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="VD: Chi nhanh Quan 1"
+            placeholder="VD: Chi nhánh Quận 1"
             required
           />
           <Input
-            label="Dia chi"
+            label="Địa chỉ"
             value={formData.address}
             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            placeholder="VD: 123 Duong ABC, Quan 1, TP.HCM"
+            placeholder="VD: 123 Đường ABC, Quận 1, TP.HCM"
             required
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Dien thoai"
+              label="Điện thoại"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="09xxxxxxxx"
@@ -245,16 +265,8 @@ export default function AdminBranchesPage() {
               className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
             />
             <label htmlFor="isActive" className="text-sm text-gray-700">
-              Chi nhanh dang hoat dong
+              Chi nhánh đang hoạt động
             </label>
-          </div>
-          <div className="flex gap-3 pt-4">
-            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)} className="flex-1">
-              Huy
-            </Button>
-            <Button type="submit" loading={formLoading} className="flex-1">
-              {editingBranch ? 'Luu thay doi' : 'Tao chi nhanh'}
-            </Button>
           </div>
         </form>
       </Modal>
@@ -263,9 +275,9 @@ export default function AdminBranchesPage() {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={confirmDelete}
-        title="Xoa chi nhanh"
-        message="Ban co chac chan muon xoa chi nhanh nay?"
-        confirmLabel="Xoa"
+        title="Xóa chi nhánh"
+        message="Bạn có chắc chắn muốn xóa chi nhánh này?"
+        confirmLabel="Xóa"
         loading={deleteLoading}
       />
     </div>

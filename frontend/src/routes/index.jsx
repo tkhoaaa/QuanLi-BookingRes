@@ -36,40 +36,12 @@ import ProtectedRoute from './ProtectedRoute'
 import AdminRoute from './AdminRoute'
 import ShipperRoute from './ShipperRoute'
 
-// Admin routes wrapper
-function AdminRoutes() {
+export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-        <Route index element={<AdminDashboardPage />} />
-        <Route path="foods" element={<AdminFoodsPage />} />
-        <Route path="orders" element={<AdminOrdersPage />} />
-        <Route path="users" element={<AdminUsersPage />} />
-        <Route path="promos" element={<AdminPromosPage />} />
-        <Route path="branches" element={<AdminBranchesPage />} />
-      </Route>
-    </Routes>
-  )
-}
-
-// Shipper routes wrapper
-function ShipperRoutes() {
-  return (
-    <Routes>
-      <Route path="/shipper" element={<ShipperRoute><ShipperLayout /></ShipperRoute>}>
-        <Route index element={<ShipperDashboardPage />} />
-        <Route path="history" element={<ShipperHistoryPage />} />
-      </Route>
-    </Routes>
-  )
-}
-
-// Main routes wrapper
-function MainRoutes() {
-  return (
-    <Routes>
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<HomePage />} />
+      {/* ── Main layout ───────────────────────────────────── */}
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<HomePage />} />
         <Route path="food/:id" element={<FoodDetailPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
@@ -99,16 +71,22 @@ function MainRoutes() {
         />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-    </Routes>
-  )
-}
 
-export default function AppRoutes() {
-  return (
-    <>
-      <MainRoutes />
-      <AdminRoutes />
-      <ShipperRoutes />
-    </>
+      {/* ── Admin layout ───────────────────────────────────── */}
+      <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+        <Route index element={<AdminDashboardPage />} />
+        <Route path="foods" element={<AdminFoodsPage />} />
+        <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
+        <Route path="promos" element={<AdminPromosPage />} />
+        <Route path="branches" element={<AdminBranchesPage />} />
+      </Route>
+
+      {/* ── Shipper layout ────────────────────────────────── */}
+      <Route path="/shipper" element={<ShipperRoute><ShipperLayout /></ShipperRoute>}>
+        <Route index element={<ShipperDashboardPage />} />
+        <Route path="history" element={<ShipperHistoryPage />} />
+      </Route>
+    </Routes>
   )
 }

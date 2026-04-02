@@ -25,7 +25,7 @@ export default function BookingActions({
                 onClick={() => onStatusUpdate(ORDER_STATUS.CONFIRMED)}
                 loading={loading}
               >
-                Xac nhan don
+                Xác nhận đơn
               </Button>
               {onAssignShipper && (
                 <Button
@@ -34,7 +34,7 @@ export default function BookingActions({
                   onClick={onAssignShipper}
                   loading={loading}
                 >
-                  Gan shipper
+                  Gán shipper
                 </Button>
               )}
               <Button
@@ -43,7 +43,7 @@ export default function BookingActions({
                 onClick={onCancel}
                 loading={loading}
               >
-                Huy don
+                Hủy đơn
               </Button>
             </>
           )}
@@ -58,7 +58,7 @@ export default function BookingActions({
             onClick={() => onStatusUpdate(ORDER_STATUS.PREPARING)}
             loading={loading}
           >
-            Bat dau chuan bi
+            Bắt đầu chuẩn bị
           </Button>
           <Button
             size="sm"
@@ -66,7 +66,7 @@ export default function BookingActions({
             onClick={onCancel}
             loading={loading}
           >
-            Huy don
+            Hủy đơn
           </Button>
         </>
       )}
@@ -78,7 +78,7 @@ export default function BookingActions({
           onClick={() => onStatusUpdate(ORDER_STATUS.PICKING)}
           loading={loading}
         >
-          Da san sang
+          Đã sẵn sàng
         </Button>
       )}
 
@@ -89,7 +89,7 @@ export default function BookingActions({
           onClick={onAssignShipper}
           loading={loading}
         >
-          Gan shipper
+          Gán shipper
         </Button>
       )}
 
@@ -100,7 +100,7 @@ export default function BookingActions({
           onClick={onAccept}
           loading={loading}
         >
-          Nhan giao hang
+          Nhận giao hàng
         </Button>
       )}
 
@@ -111,7 +111,7 @@ export default function BookingActions({
           onClick={onComplete}
           loading={loading}
         >
-          Da giao hang
+          Đã giao hàng
         </Button>
       )}
     </div>

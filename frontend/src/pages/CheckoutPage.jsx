@@ -5,32 +5,31 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { motion } from 'framer-motion'
-import { ShoppingBag, MapPin, CreditCard, Truck, Store, Tag } from 'lucide-react'
+import { MapPin, CreditCard, Truck, Store, Sparkles, ChevronRight } from 'lucide-react'
 import { createOrder } from '../slices/ordersSlice'
 import { selectCartItems, selectCartTotal, clearCart } from '../slices/cartSlice'
-import { formatCurrency, cn } from '../lib/utils'
+import { formatCurrency, cn, resolveFoodImage } from '../lib/utils'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import toast from 'react-hot-toast'
-import { PAYMENT_METHODS, FULFILLMENT_TYPES } from '../constants'
 
 const schema = yup.object({
-  fullName: yup.string().required('Ho ten la bat buoc'),
-  phone: yup.string().required('So dien thoai la bat buoc').matches(/^[0-9]{9,11}$/, 'So dien thoai khong hop le'),
+  fullName: yup.string().required('Họ tên là bắt buộc'),
+  phone: yup.string().required('Số điện thoại là bắt buộc').matches(/^[0-9]{9,11}$/, 'Số điện thoại không hợp lệ'),
   address: yup.string().when('fulfillmentType', {
     is: 'delivery',
-    then: (schema) => schema.required('Dia chi la bat buoc'),
+    then: (schema) => schema.required('Địa chỉ là bắt buộc'),
     otherwise: (schema) => schema,
   }),
   branchId: yup.string().when('fulfillmentType', {
     is: 'pickup',
-    then: (schema) => schema.required('Chon chi nhanh lay hang'),
+    then: (schema) => schema.required('Chọn chi nhánh lấy hàng'),
     otherwise: (schema) => schema,
   }),
-  fulfillmentType: yup.string().required('Chon hinh thuc nhan hang'),
-  paymentMethod: yup.string().required('Chon phuong thuc thanh toan'),
+  fulfillmentType: yup.string().required('Chọn hình thức nhận hàng'),
+  paymentMethod: yup.string().required('Chọn phương thức thanh toán'),
   note: yup.string(),
 })
 
@@ -45,7 +44,7 @@ export default function CheckoutPage() {
   const { loading } = useSelector((state) => state.orders)
 
   const [fulfillmentType, setFulfillmentType] = useState('delivery')
-  const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [paymentMethod, setPaymentMethod] = useState('COD')
   const [branches] = useState([])
 
   const {
@@ -60,12 +59,11 @@ export default function CheckoutPage() {
       phone: user?.phone || '',
       address: user?.addresses?.[0] || '',
       fulfillmentType: 'delivery',
-      paymentMethod: 'cash',
+      paymentMethod: 'COD',
       note: '',
     },
   })
 
-  const watchedAddress = watch('address')
   const discount = coupon?.discount || 0
   const discountAmount = discount > 0 ? Math.round(total * (discount / 100)) : 0
   const deliveryFee = fulfillmentType === 'delivery' ? 15000 : 0
@@ -73,13 +71,24 @@ export default function CheckoutPage() {
 
   const onSubmit = async (data) => {
     if (items.length === 0) {
-      toast.error('Gio hang trong')
+      toast.error('Giỏ hàng trống')
       return
     }
 
     try {
+      const shippingAddress = fulfillmentType === 'delivery'
+        ? {
+            name: data.fullName,
+            phone: data.phone,
+            address: data.address,
+          }
+        : null
+
       const orderData = {
-        ...data,
+        fulfillmentType,
+        paymentMethod,
+        shippingAddress,
+        branchId: fulfillmentType === 'pickup' ? data.branchId : undefined,
         items: items.map((item) => ({
           food: item.food._id,
           quantity: item.quantity,
@@ -91,100 +100,122 @@ export default function CheckoutPage() {
         deliveryFee,
         total: grandTotal,
         couponCode: coupon?.code || null,
+        note: data.note || undefined,
       }
 
       const result = await dispatch(createOrder(orderData)).unwrap()
       dispatch(clearCart())
-      toast.success('Dat hang thanh cong!')
+      toast.success('Đặt hàng thành công!')
       navigate(`/orders/${result._id}`)
     } catch (error) {
-      toast.error(error || 'Dat hang that bai. Vui long thu lai.')
+      toast.error(error || 'Đặt hàng thất bại. Vui lòng thử lại.')
     }
   }
 
-  const paymentOptions = Object.entries(PAYMENT_METHODS).map(([value, label]) => ({
-    value,
-    label,
-  }))
+  const paymentOptions = [
+    { value: 'COD', label: 'Tiền mặt', icon: '💵' },
+    { value: 'VNPAY', label: 'VNPay', icon: '💳' },
+    { value: 'MOMO', label: 'MoMo', icon: '📱' },
+  ]
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-cream flex items-center justify-center">
         <div className="text-center">
-          <ShoppingBag className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-          <p className="text-gray-500">Gio hang trong. Vui long them mon an truoc.</p>
+          <div className="w-16 h-16 bg-charcoal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Truck className="w-8 h-8 text-charcoal-300" />
+          </div>
+          <p className="text-charcoal-500">Giỏ hàng trống. Vui lòng thêm món ăn trước.</p>
+          <Button className="mt-4" onClick={() => navigate('/')}>
+            Quay lại thực đơn
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-cream py-8">
       <div className="max-w-5xl mx-auto px-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Thanh toan</h1>
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+            <CreditCard className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-charcoal-900 font-heading">Thanh toán</h1>
+            <p className="text-sm text-charcoal-500">Kiểm tra và xác nhận đơn hàng của bạn</p>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Form */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
+            {/* Delivery Info */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-xl p-6 shadow-sm"
+              className="bg-white rounded-2xl p-5 shadow-card"
             >
-              <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <h2 className="font-semibold text-charcoal-900 mb-4 flex items-center gap-2 font-heading">
                 <MapPin className="w-5 h-5 text-primary" />
-                Thong tin nhan hang
+                Thông tin nhận hàng
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  label="Ho va ten"
+                  label="Họ và tên"
+                  placeholder="Nhập họ và tên"
                   {...register('fullName')}
                   error={errors.fullName?.message}
                 />
                 <Input
-                  label="So dien thoai"
+                  label="Số điện thoại"
+                  placeholder="09xxxxxxxx"
                   {...register('phone')}
                   error={errors.phone?.message}
-                  placeholder="09xxxxxxxx"
                 />
               </div>
 
               {/* Fulfillment Type */}
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Hinh thuc nhan hang
+                <label className="block text-sm font-medium text-charcoal-700 mb-2.5">
+                  Hình thức nhận hàng
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setFulfillmentType('delivery')}
                     className={cn(
-                      'flex items-center gap-3 p-4 rounded-xl border-2 transition-colors',
+                      'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
                       fulfillmentType === 'delivery'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                        : 'border-charcoal-200 text-charcoal-600 hover:border-charcoal-300'
                     )}
                   >
-                    <Truck className="w-5 h-5" />
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                      <Truck className="w-5 h-5" />
+                    </div>
                     <div className="text-left">
-                      <p className="font-medium">Giao hang</p>
-                      <p className="text-xs text-gray-500">Phí {formatCurrency(15000)}</p>
+                      <p className="font-semibold text-sm">Giao hàng</p>
+                      <p className="text-xs opacity-70">Phi {formatCurrency(15000)}</p>
                     </div>
                   </button>
                   <button
                     type="button"
                     onClick={() => setFulfillmentType('pickup')}
                     className={cn(
-                      'flex items-center gap-3 p-4 rounded-xl border-2 transition-colors',
+                      'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
                       fulfillmentType === 'pickup'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                        : 'border-charcoal-200 text-charcoal-600 hover:border-charcoal-300'
                     )}
                   >
-                    <Store className="w-5 h-5" />
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                      <Store className="w-5 h-5" />
+                    </div>
                     <div className="text-left">
-                      <p className="font-medium">Tu lay tai cua hang</p>
-                      <p className="text-xs text-gray-500">Mien phi</p>
+                      <p className="font-semibold text-sm">Tự lấy tại cửa hàng</p>
+                      <p className="text-xs opacity-70">Miễn phí</p>
                     </div>
                   </button>
                 </div>
@@ -194,10 +225,10 @@ export default function CheckoutPage() {
               {fulfillmentType === 'delivery' && (
                 <div className="mt-4">
                   <Input
-                    label="Dia chi giao hang"
+                    label="Địa chỉ giao hàng"
+                    placeholder="VD: 123 Đường ABC, Phường X, Quận Y, TP.HCM"
                     {...register('address')}
                     error={errors.address?.message}
-                    placeholder="VD: 123 Duong ABC, Phuong X, Quan Y, TP.HCM"
                   />
                 </div>
               )}
@@ -205,24 +236,24 @@ export default function CheckoutPage() {
               {fulfillmentType === 'pickup' && (
                 <div className="mt-4">
                   <Select
-                    label="Chon chi nhanh"
+                    label="Chọn chi nhánh"
                     {...register('branchId')}
                     error={errors.branchId?.message}
                     options={branches.map((b) => ({ value: b._id, label: b.name }))}
-                    placeholder="Chon chi nhanh"
+                    placeholder="Chọn chi nhánh"
                   />
                 </div>
               )}
 
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Ghi chu (tuychon)
+                <label className="block text-sm font-medium text-charcoal-700 mb-1.5">
+                  Ghi chú (tùy chọn)
                 </label>
                 <textarea
                   {...register('note')}
                   rows={2}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  placeholder="VD: Khong hanh, it duong..."
+                  className="w-full px-4 py-2.5 text-sm border border-charcoal-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+                  placeholder="VD: Không hành, ít đường..."
                 />
               </div>
             </motion.div>
@@ -232,26 +263,27 @@ export default function CheckoutPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-xl p-6 shadow-sm"
+              className="bg-white rounded-2xl p-5 shadow-card"
             >
-              <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <h2 className="font-semibold text-charcoal-900 mb-4 flex items-center gap-2 font-heading">
                 <CreditCard className="w-5 h-5 text-primary" />
-                Phuong thuc thanh toan
+                Phương thức thanh toán
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {paymentOptions.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => setPaymentMethod(opt.value)}
                     className={cn(
-                      'p-3 rounded-xl border-2 text-sm font-medium transition-colors text-left',
+                      'p-3 rounded-xl border-2 text-sm font-medium transition-all text-left flex items-center gap-3',
                       paymentMethod === opt.value
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                        : 'border-charcoal-200 text-charcoal-600 hover:border-charcoal-300'
                     )}
                   >
-                    {opt.label}
+                    <span className="text-lg">{opt.icon}</span>
+                    <span>{opt.label}</span>
                   </button>
                 ))}
               </div>
@@ -261,55 +293,75 @@ export default function CheckoutPage() {
 
           {/* Right: Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl p-5 shadow-sm sticky top-24">
-              <h2 className="font-semibold text-gray-900 mb-4">Don hang cua ban</h2>
+            <div className="bg-white rounded-2xl p-5 shadow-card sticky top-24">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="w-4 h-4 text-secondary" />
+                <h2 className="font-bold text-charcoal-900 font-heading">Đơn hàng của bạn</h2>
+              </div>
 
               {/* Items */}
               <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                 {items.map((item) => (
                   <div key={`${item.food._id}-${item.variantStr}`} className="flex gap-3 text-sm">
                     <img
-                      src={item.food.image || 'https://via.placeholder.com/50'}
+                      src={resolveFoodImage(item.food.images, 'https://via.placeholder.com/50?text=Food')}
                       alt={item.food.name}
                       className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{item.food.name}</p>
-                      <p className="text-xs text-gray-500">x{item.quantity}</p>
+                      <p className="font-medium text-charcoal-900 truncate">{item.food.name}</p>
+                      <p className="text-xs text-charcoal-500">x{item.quantity}</p>
                     </div>
-                    <span className="text-sm font-medium flex-shrink-0">
-                      {formatCurrency((item.food.price + (item.variant?.price || 0) + item.toppings.reduce((s, t) => s + (t.price || 0), 0)) * item.quantity)}
+                    <span className="text-sm font-semibold text-charcoal-900 flex-shrink-0">
+                      {formatCurrency(
+                        (item.food.price +
+                          (item.variant?.price || 0) +
+                          item.toppings.reduce((s, t) => s + (t.price || 0), 0)) *
+                          item.quantity
+                      )}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <div className="space-y-2 text-sm border-t pt-4">
+              <div className="space-y-2.5 text-sm border-t border-charcoal-100 pt-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Tam tinh</span>
-                  <span>{formatCurrency(total)}</span>
+                  <span className="text-charcoal-500">Tạm tính</span>
+                  <span className="text-charcoal-700">{formatCurrency(total)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-green-600">
-                    <span>Giam gia ({coupon?.code})</span>
+                    <span>Giảm giá ({coupon?.code})</span>
                     <span>-{formatCurrency(discountAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-500">
-                    Phi giao hang
+                  <span className="text-charcoal-500">Phí giao hàng</span>
+                  <span className={fulfillmentType === 'pickup' ? 'text-green-600' : 'text-charcoal-700'}>
+                    {fulfillmentType === 'pickup' ? 'Miễn phí' : formatCurrency(deliveryFee)}
                   </span>
-                  <span>{fulfillmentType === 'pickup' ? 'Mien phi' : formatCurrency(deliveryFee)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-base pt-2 border-t">
-                  <span>Tong cong</span>
-                  <span className="text-primary">{formatCurrency(grandTotal)}</span>
+                <div className="flex justify-between font-bold text-base pt-2.5 border-t border-charcoal-100">
+                  <span className="text-charcoal-900">Tổng cộng</span>
+                  <span className="text-secondary font-heading">{formatCurrency(grandTotal)}</span>
                 </div>
               </div>
 
-              <Button type="submit" className="w-full mt-4" loading={loading} disabled={loading}>
-                Dat hang ngay
+              <Button
+                type="submit"
+                className="w-full mt-4 group"
+                loading={loading}
+                disabled={loading}
+                size="lg"
+                icon={ChevronRight}
+                iconPosition="right"
+              >
+                Đặt hàng ngay
               </Button>
+
+              <p className="text-xs text-charcoal-400 text-center mt-3">
+                Bạn có thể hủy đơn hàng trong 5 phút đầu tiên
+              </p>
             </div>
           </div>
         </form>

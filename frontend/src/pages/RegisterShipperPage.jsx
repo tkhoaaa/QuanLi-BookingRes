@@ -14,15 +14,15 @@ import toast from 'react-hot-toast'
 const SHIPPER_KEY = 'SHIPPERNHAHANGVIET'
 
 const schema = yup.object({
-  shipperKey: yup.string().required('Ma xac thuc shipper la bat buoc'),
-  name: yup.string().required('Ho ten la bat buoc').min(2, 'Ten it nhat 2 ky tu'),
-  email: yup.string().required('Email la bat buoc').email('Email khong hop le'),
-  phone: yup.string().required('So dien thoai la bat buoc').matches(/^[0-9]{9,11}$/, 'So dien thoai khong hop le'),
-  password: yup.string().required('Mat khau la bat buoc').min(6, 'Mat khau it nhat 6 ky tu'),
+  shipperKey: yup.string().required('Mã xác thực shipper là bắt buộc'),
+  name: yup.string().required('Họ tên là bắt buộc').min(2, 'Tên ít nhất 2 ký tự'),
+  email: yup.string().required('Email là bắt buộc').email('Email không hợp lệ'),
+  phone: yup.string().required('Số điện thoại là bắt buộc').matches(/^[0-9]{9,11}$/, 'Số điện thoại không hợp lệ'),
+  password: yup.string().required('Mật khẩu là bắt buộc').min(6, 'Mật khẩu ít nhất 6 ký tự'),
   confirmPassword: yup
     .string()
-    .required('Xac nhan mat khau la bat buoc')
-    .oneOf([yup.ref('password')], 'Mat khau khong khop'),
+    .required('Xác nhận mật khẩu là bắt buộc')
+    .oneOf([yup.ref('password')], 'Mật khẩu không khớp'),
 })
 
 export default function RegisterShipperPage() {
@@ -40,7 +40,7 @@ export default function RegisterShipperPage() {
 
   const onSubmit = async (data) => {
     if (data.shipperKey !== SHIPPER_KEY) {
-      toast.error('Ma xac thuc shipper khong dung')
+      toast.error('Mã xác thực shipper không đúng')
       return
     }
     try {
@@ -53,10 +53,10 @@ export default function RegisterShipperPage() {
           role: 'shipper',
         })
       ).unwrap()
-      toast.success(`Dang ky shipper thanh cong! Chao mung ${result.user.name}!`)
+      toast.success(`Đăng ký shipper thành công! Chào mừng ${result.user.name}!`)
       navigate('/shipper')
     } catch (error) {
-      toast.error(error || 'Dang ky that bai')
+      toast.error(error || 'Đăng ký thất bại')
     }
   }
 
@@ -72,25 +72,25 @@ export default function RegisterShipperPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-2xl mb-4">
               <Truck className="w-8 h-8 text-green-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Dang ky Shipper</h1>
-            <p className="text-gray-500 mt-1 text-sm">Dang ky tai khoan giao hang</p>
+            <h1 className="text-2xl font-bold text-gray-900">Đăng ký Shipper</h1>
+            <p className="text-gray-500 mt-1 text-sm">Đăng ký tài khoản giao hàng</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <p className="text-xs text-yellow-700">
-                Vui long nhap ma xac thuc shipper de tiep tuc. Ma: <code className="font-mono font-bold">SHIPPERNHAHANGVIET</code>
+                Vui lòng nhập mã xác thực shipper để tiếp tục. Mã: <code className="font-mono font-bold">SHIPPERNHAHANGVIET</code>
               </p>
             </div>
 
             <Input
-              label="Ma xac thuc shipper"
-              placeholder="Nhap ma bi mat"
+              label="Mã xác thực shipper"
+              placeholder="Nhập mã bí mật"
               {...formRegister('shipperKey')}
               error={errors.shipperKey?.message}
             />
             <Input
-              label="Ho va ten"
+              label="Họ và tên"
               placeholder="Nguyen Van B"
               {...formRegister('name')}
               error={errors.name?.message}
@@ -103,34 +103,34 @@ export default function RegisterShipperPage() {
               error={errors.email?.message}
             />
             <Input
-              label="So dien thoai"
+              label="Số điện thoại"
               placeholder="09xxxxxxxx"
               {...formRegister('phone')}
               error={errors.phone?.message}
             />
             <Input
-              label="Mat khau"
+              label="Mật khẩu"
               type="password"
-              placeholder="It nhat 6 ky tu"
+              placeholder="Ít nhất 6 ký tự"
               {...formRegister('password')}
               error={errors.password?.message}
             />
             <Input
-              label="Xac nhan mat khau"
+              label="Xác nhận mật khẩu"
               type="password"
-              placeholder="Nhap lai mat khau"
+              placeholder="Nhập lại mật khẩu"
               {...formRegister('confirmPassword')}
               error={errors.confirmPassword?.message}
             />
 
             <Button type="submit" className="w-full" loading={loading} icon={UserPlus}>
-              Dang ky Shipper
+              Đăng ký Shipper
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm">
             <Link to="/register" className="text-primary hover:text-primary-dark">
-              Dang ky khach hang
+              Đăng ký khách hàng
             </Link>
           </div>
         </div>

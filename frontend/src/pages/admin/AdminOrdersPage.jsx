@@ -38,32 +38,32 @@ export default function AdminOrdersPage() {
     setLoadingUpdate(true)
     try {
       await dispatch(updateOrderStatus({ id: updateStatusId, status: newStatus })).unwrap()
-      toast.success('Cap nhat trang thai thanh cong')
+      toast.success('Cập nhật trạng thái thành công')
       setUpdateStatusId(null)
     } catch (error) {
-      toast.error(error || 'Cap nhat that bai')
+      toast.error(error || 'Cập nhật thất bại')
     } finally {
       setLoadingUpdate(false)
     }
   }
 
   const statusOptions = [
-    { value: '', label: 'Tat ca' },
-    { value: ORDER_STATUS.PENDING, label: 'Cho xu ly' },
-    { value: ORDER_STATUS.CONFIRMED, label: 'Da xac nhan' },
-    { value: ORDER_STATUS.PREPARING, label: 'Dang chuan bi' },
-    { value: ORDER_STATUS.PICKING, label: 'Dang lay hang' },
-    { value: ORDER_STATUS.DELIVERING, label: 'Dang giao' },
-    { value: ORDER_STATUS.DELIVERED, label: 'Da giao' },
-    { value: ORDER_STATUS.CANCELLED, label: 'Da huy' },
+    { value: '', label: 'Tất cả' },
+    { value: ORDER_STATUS.PENDING, label: 'Chờ xử lý' },
+    { value: ORDER_STATUS.CONFIRMED, label: 'Đã xác nhận' },
+    { value: ORDER_STATUS.PREPARING, label: 'Đang chuẩn bị' },
+    { value: ORDER_STATUS.PICKING, label: 'Đang lấy hàng' },
+    { value: ORDER_STATUS.DELIVERING, label: 'Đang giao' },
+    { value: ORDER_STATUS.DELIVERED, label: 'Đã giao' },
+    { value: ORDER_STATUS.CANCELLED, label: 'Đã hủy' },
   ]
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Quan ly don hang</h1>
-        <p className="text-gray-500 text-sm mt-1">{orders.length} don hang</p>
+        <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
+        <p className="text-gray-500 text-sm mt-1">{orders.length} đơn hàng</p>
       </div>
 
       {/* Filters */}
@@ -72,7 +72,7 @@ export default function AdminOrdersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Tim don hang..."
+            placeholder="Tìm đơn hàng..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -96,19 +96,19 @@ export default function AdminOrdersPage() {
             <LoadingSpinner />
           </div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">Khong co don hang nao</div>
+          <div className="text-center py-20 text-gray-400">Không có đơn hàng nào</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-500 bg-gray-50 border-b">
-                  <th className="px-4 py-3 font-medium">Ma don</th>
-                  <th className="px-4 py-3 font-medium">Khach hang</th>
-                  <th className="px-4 py-3 font-medium">Tong tien</th>
-                  <th className="px-4 py-3 font-medium">Thanh toan</th>
-                  <th className="px-4 py-3 font-medium">Trang thai</th>
-                  <th className="px-4 py-3 font-medium">Ngay dat</th>
-                  <th className="px-4 py-3 font-medium">Hanh dong</th>
+                  <th className="px-4 py-3 font-medium">Mã đơn</th>
+                  <th className="px-4 py-3 font-medium">Khách hàng</th>
+                  <th className="px-4 py-3 font-medium">Tổng tiền</th>
+                  <th className="px-4 py-3 font-medium">Thanh toán</th>
+                  <th className="px-4 py-3 font-medium">Trạng thái</th>
+                  <th className="px-4 py-3 font-medium">Ngày đặt</th>
+                  <th className="px-4 py-3 font-medium">Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -123,7 +123,7 @@ export default function AdminOrdersPage() {
                       #{order._id?.slice(-8).toUpperCase()}
                     </td>
                     <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{order.shippingAddress?.name || order.user?.name || 'Khach'}</p>
+                      <p className="font-medium text-gray-900">{order.shippingAddress?.name || order.user?.name || 'Khách'}</p>
                       <p className="text-xs text-gray-500">{order.shippingAddress?.phone || order.user?.phone || '-'}</p>
                     </td>
                     <td className="px-4 py-3 text-primary font-medium">{formatCurrency(order.total)}</td>
@@ -174,9 +174,9 @@ export default function AdminOrdersPage() {
         isOpen={!!updateStatusId}
         onClose={() => setUpdateStatusId(null)}
         onConfirm={confirmUpdateStatus}
-        title="Cap nhat trang thai"
-        message="Ban co chac chan muon cap nhat trang thai don hang nay?"
-        confirmLabel="Cap nhat"
+        title="Cập nhật trạng thái"
+        message="Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng này?"
+        confirmLabel="Cập nhật"
         loading={loadingUpdate}
       />
     </div>

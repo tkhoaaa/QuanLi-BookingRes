@@ -30,9 +30,9 @@ export default function ShipperHistoryPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Lich su giao hang</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Lịch sử giao hàng</h1>
         <p className="text-gray-500 text-sm mt-1">
-          {myDeliveredOrders.length} don hang da giao
+          {myDeliveredOrders.length} đơn hàng đã giao
         </p>
       </div>
 
@@ -44,20 +44,20 @@ export default function ShipperHistoryPage() {
       ) : myDeliveredOrders.length === 0 ? (
         <EmptyState
           icon={History}
-          title="Chua co don hang nao da giao"
-          description="Cac don hang ban da giao thanh cong se hien thi o day"
+          title="Chưa có đơn hàng nào đã giao"
+          description="Các đơn hàng bạn đã giao thành công sẽ hiển thị ở đây"
         />
       ) : (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-gray-500 bg-gray-50 border-b">
-                <th className="px-4 py-3 font-medium">Ma don</th>
-                <th className="px-4 py-3 font-medium">Khach hang</th>
-                <th className="px-4 py-3 font-medium">Dia chi</th>
-                <th className="px-4 py-3 font-medium">Tong tien</th>
-                <th className="px-4 py-3 font-medium">Trang thai</th>
-                <th className="px-4 py-3 font-medium">Thoi gian giao</th>
+                <th className="px-4 py-3 font-medium">Mã đơn</th>
+                <th className="px-4 py-3 font-medium">Khách hàng</th>
+                <th className="px-4 py-3 font-medium">Địa chỉ</th>
+                <th className="px-4 py-3 font-medium">Tổng tiền</th>
+                <th className="px-4 py-3 font-medium">Trạng thái</th>
+                <th className="px-4 py-3 font-medium">Thời gian giao</th>
                 <th className="px-4 py-3 font-medium">Xem</th>
               </tr>
             </thead>
@@ -74,7 +74,7 @@ export default function ShipperHistoryPage() {
                     #{order._id?.slice(-8).toUpperCase()}
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium">{order.shippingAddress?.name || order.user?.name || 'Khach'}</p>
+                    <p className="font-medium">{order.shippingAddress?.name || order.user?.name || 'Khách'}</p>
                     <p className="text-xs text-gray-500">{order.shippingAddress?.phone || order.user?.phone || '-'}</p>
                   </td>
                   <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">

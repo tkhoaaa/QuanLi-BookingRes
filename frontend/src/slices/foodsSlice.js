@@ -35,6 +35,9 @@ export const fetchFoods = createAsyncThunk(
       if (filters.order) query.append('order', filters.order)
       if (filters.page) query.append('page', filters.page)
       if (filters.limit) query.append('limit', filters.limit)
+      if (filters.isAvailable !== undefined && filters.isAvailable !== null) {
+        query.append('isAvailable', filters.isAvailable)
+      }
 
       const res = await axiosClient.get(`/foods?${query.toString()}`)
       return res.data.data

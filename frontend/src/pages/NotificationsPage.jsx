@@ -26,9 +26,9 @@ export default function NotificationsPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Bell className="w-6 h-6 text-primary" />
-            Thong bao
+            Thông báo
             {unreadCount > 0 && (
-              <Badge variant="danger" className="ml-2">{unreadCount} moi</Badge>
+              <Badge variant="danger" className="ml-2">{unreadCount} mới</Badge>
             )}
           </h1>
           {unreadCount > 0 && (
@@ -38,7 +38,7 @@ export default function NotificationsPage() {
               onClick={handleMarkAllRead}
               icon={CheckCheck}
             >
-              Danh dau da doc
+              Đánh dấu đã đọc
             </Button>
           )}
         </div>
@@ -46,8 +46,8 @@ export default function NotificationsPage() {
         {notifications.length === 0 ? (
           <EmptyState
             icon={Bell}
-            title="Khong co thong bao nao"
-            description="Cac thong bao ve don hang, khuyen mai se hien thi o day"
+            title="Không có thông báo nào"
+            description="Các thông báo về đơn hàng, khuyến mãi sẽ hiển thị ở đây"
           />
         ) : (
           <div className="space-y-3">
@@ -71,7 +71,7 @@ export default function NotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h4 className={`text-sm font-medium ${!notif.isRead ? 'text-gray-900' : 'text-gray-600'}`}>
-                        {notif.title || 'Thong bao'}
+                        {notif.title || 'Thông báo'}
                       </h4>
                       <div className="flex items-center gap-2">
                         <Clock className="w-3 h-3 text-gray-400" />
@@ -86,7 +86,7 @@ export default function NotificationsPage() {
                         href={notif.actionUrl}
                         className="text-xs text-primary font-medium mt-2 inline-block hover:underline"
                       >
-                        Xem chi tiet
+                        Xem chi tiết
                       </a>
                     )}
                   </div>
