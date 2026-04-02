@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { useForm } from 'react-hook-form'
@@ -14,6 +14,7 @@ import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import toast from 'react-hot-toast'
+import axiosClient from '../api/axiosClient'
 
 const schema = yup.object({
   fullName: yup.string().required('Họ tên là bắt buộc'),
@@ -45,7 +46,13 @@ export default function CheckoutPage() {
 
   const [fulfillmentType, setFulfillmentType] = useState('delivery')
   const [paymentMethod, setPaymentMethod] = useState('COD')
-  const [branches] = useState([])
+  const [branches, setBranches] = useState([])
+
+  useEffect(() => {
+    axiosClient.get('/branches').then(res => {
+      setBranches(res.data.data || [])
+    }).catch(() => setBranches([]))
+  }, [])
 
   const {
     register,

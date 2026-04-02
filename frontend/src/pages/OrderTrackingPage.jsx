@@ -14,7 +14,7 @@ import {
   Phone,
   Sparkles,
 } from 'lucide-react'
-import { fetchOrderDetail } from '../slices/ordersSlice'
+import { fetchOrderDetail, cancelOrder } from '../slices/ordersSlice'
 import { socket } from '../lib/socket'
 import StatusBadge from '../components/ui/StatusBadge'
 import Button from '../components/ui/Button'
@@ -235,7 +235,7 @@ export default function OrderTrackingPage() {
         {/* Actions */}
         {currentOrder.status === ORDER_STATUS.PENDING && user?.role === 'customer' && (
           <div className="text-center">
-            <Button variant="danger" className="px-8">
+            <Button variant="danger" className="px-8" onClick={() => dispatch(cancelOrder(currentOrder._id))}>
               Hủy đơn hàng
             </Button>
           </div>

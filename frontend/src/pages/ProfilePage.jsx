@@ -77,24 +77,24 @@ export default function ProfilePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-cream py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Tài khoản của tôi</h1>
+        <h1 className="text-2xl font-bold text-charcoal-900 font-heading mb-6">Tài khoản của tôi</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="md:col-span-1">
-            <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="bg-white rounded-2xl p-4 shadow-card">
               <div className="flex items-center gap-3 p-3 mb-2">
                 <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
                   {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
+                  <p className="font-medium text-charcoal-900">{user?.name}</p>
+                  <p className="text-xs text-charcoal-500">{user?.email}</p>
                 </div>
               </div>
-              <hr className="my-2" />
+              <hr className="my-2 border-charcoal-100" />
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
@@ -102,7 +102,7 @@ export default function ProfilePage() {
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeTab === tab.key
                       ? 'bg-primary text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      : 'text-charcoal-600 hover:bg-charcoal-100'
                   }`}
                 >
                   <tab.icon className="w-4 h-4" />
@@ -118,11 +118,11 @@ export default function ProfilePage() {
               key={activeTab}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-xl p-6 shadow-sm"
+              className="bg-white rounded-2xl p-6 shadow-card"
             >
               {activeTab === 'profile' && (
                 <>
-                  <h2 className="font-semibold text-gray-900 mb-4">Thông tin cá nhân</h2>
+                  <h2 className="font-semibold text-charcoal-900 mb-4">Thông tin cá nhân</h2>
                   <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)} className="space-y-4 max-w-md">
                     <Input
                       label="Họ và tên"
@@ -147,7 +147,7 @@ export default function ProfilePage() {
 
               {activeTab === 'password' && (
                 <>
-                  <h2 className="font-semibold text-gray-900 mb-4">Đổi mật khẩu</h2>
+                  <h2 className="font-semibold text-charcoal-900 mb-4">Đổi mật khẩu</h2>
                   <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-4 max-w-md">
                     <Input
                       label="Mật khẩu hiện tại"
@@ -174,14 +174,14 @@ export default function ProfilePage() {
 
               {activeTab === 'addresses' && (
                 <>
-                  <h2 className="font-semibold text-gray-900 mb-4">Địa chỉ giao hàng</h2>
+                  <h2 className="font-semibold text-charcoal-900 mb-4">Địa chỉ giao hàng</h2>
                   {user?.addresses?.length > 0 ? (
                     <div className="space-y-3">
                       {user.addresses.map((addr, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div key={i} className="flex items-center justify-between p-4 border border-charcoal-200 rounded-xl">
                           <div>
-                            <p className="font-medium text-gray-900">{addr.label}</p>
-                            <p className="text-sm text-gray-500">{addr.fullAddress}</p>
+                            <p className="font-medium text-charcoal-900">{addr.label}</p>
+                            <p className="text-sm text-charcoal-500">{addr.fullAddress}</p>
                             {addr.isDefault && (
                               <span className="text-xs text-primary font-medium">Mặc định</span>
                             )}
@@ -190,7 +190,7 @@ export default function ProfilePage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">Chưa có địa chỉ nào được lưu.</p>
+                    <p className="text-sm text-charcoal-500">Chưa có địa chỉ nào được lưu.</p>
                   )}
                 </>
               )}

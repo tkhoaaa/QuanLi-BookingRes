@@ -237,8 +237,21 @@ const assignShipper = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Order not found" });
   }
 
+  if (order.status !== ORDER_STATUS.CONFIRMED) {
+    return res
+      .status(400)
+      .json({ message: `Shipper can only be assigned to confirmed orders. Current status: ${order.status}` });
+  }
+
+  const validNext = VALID_TRANSITIONS[order.status] || [];
+  if (!validNext.includes(ORDER_STATUS.PREPARING)) {
+    return res
+      .status(400)
+      .json({ message: `Cannot transition from ${order.status} to preparing` });
+  }
+
   order.shipper = shipperId;
-  order.status = ORDER_STATUS.PICKING;
+  order.status = ORDER_STATUS.PREPARING;
   await order.save();
 
   const populatedOrder = await Booking.findById(order._id).populate("shipper", "name phone");
@@ -281,7 +294,7 @@ const cancelOrder = asyncHandler(async (req, res) => {
     orderCode: order.orderCode,
   });
 
-  return res.status(200).json(new ApiResponse(200, null, "Order cancelled"));
+  return res.status(200).json(new ApiResponse(200, order, "Order cancelled"));
 });
 
 module.exports = {

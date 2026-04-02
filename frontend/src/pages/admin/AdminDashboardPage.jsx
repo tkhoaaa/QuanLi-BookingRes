@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
 import {
@@ -13,57 +13,124 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { fetchAllOrders } from '../../slices/ordersSlice'
 import { formatCurrency } from '../../lib/utils'
+import axiosClient from '../../api/axiosClient'
 
 export default function AdminDashboardPage() {
   const dispatch = useDispatch()
   const { orders } = useSelector((state) => state.orders)
   const { foods } = useSelector((state) => state.foods)
-  const [stats, setStats] = useState({
-    totalRevenue: 0,
-    totalOrders: 0,
-    totalUsers: 0,
-    totalFoods: 0,
-    revenueGrowth: 0,
-    ordersGrowth: 0,
-  })
-
-  // Sample chart data (replace with API data in production)
-  const chartData = [
-    { day: 'T2', revenue: 1200000, orders: 12 },
-    { day: 'T3', revenue: 1900000, orders: 19 },
-    { day: 'T4', revenue: 1500000, orders: 15 },
-    { day: 'T5', revenue: 2200000, orders: 22 },
-    { day: 'T6', revenue: 2800000, orders: 28 },
-    { day: 'T7', revenue: 3200000, orders: 32 },
-    { day: 'CN', revenue: 2600000, orders: 26 },
-  ]
+  const [totalUsers, setTotalUsers] = useState(0)
 
   useEffect(() => {
-    dispatch(fetchAllOrders({ limit: 100 }))
+    dispatch(fetchAllOrders({ limit: 200 }))
+    // Fetch total users count
+    axiosClient.get('/admin/users?limit=1').then(res => {
+      setTotalUsers(res.data.pagination?.total || 0)
+    }).catch(() => {
+      setTotalUsers(0)
+    })
   }, [dispatch])
+
+  // Compute real stats from orders
+  const stats = useMemo(() => {
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const weekStart = new Date(todayStart)
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() - 6)
+
+    const todayOrders = orders.filter(o => new Date(o.updatedAt || o.createdAt) >= todayStart)
+    const weekOrders = orders.filter(o => new Date(o.updatedAt || o.createdAt) >= weekStart)
+
+    const totalRevenue = orders
+      .filter(o => o.status === 'delivered')
+      .reduce((sum, o) => sum + (o.total || 0), 0)
+
+    const weekRevenue = weekOrders
+      .filter(o => o.status === 'delivered')
+      .reduce((sum, o) => sum + (o.total || 0), 0)
+
+    const prevWeekStart = new Date(weekStart)
+    prevWeekStart.setDate(prevWeekStart.getDate() - 7)
+    const prevWeekEnd = new Date(weekStart)
+    prevWeekEnd.setDate(prevWeekEnd.getDate() - 1)
+    const prevWeekOrders = orders.filter(o => {
+      const d = new Date(o.updatedAt || o.createdAt)
+      return d >= prevWeekStart && d <= prevWeekEnd
+    })
+    const prevWeekRevenue = prevWeekOrders
+      .filter(o => o.status === 'delivered')
+      .reduce((sum, o) => sum + (o.total || 0), 0)
+
+    const revenueGrowth = prevWeekRevenue > 0
+      ? Math.round(((weekRevenue - prevWeekRevenue) / prevWeekRevenue) * 100)
+      : weekRevenue > 0 ? 100 : 0
+
+    const ordersGrowth = prevWeekOrders.length > 0
+      ? Math.round(((weekOrders.length - prevWeekOrders.length) / prevWeekOrders.length) * 100)
+      : weekOrders.length > 0 ? 100 : 0
+
+    return {
+      totalRevenue,
+      totalOrders: orders.length,
+      totalUsers,
+      totalFoods: foods.length,
+      todayOrders: todayOrders.length,
+      todayRevenue: todayOrders.filter(o => o.status === 'delivered').reduce((sum, o) => sum + (o.total || 0), 0),
+      revenueGrowth,
+      ordersGrowth,
+    }
+  }, [orders, foods, totalUsers])
+
+  // Build 7-day chart data from real orders
+  const chartData = useMemo(() => {
+    const days = []
+    const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+      const dayEnd = new Date(dayStart)
+      dayEnd.setDate(dayEnd.getDate() + 1)
+
+      const dayOrders = orders.filter(o => {
+        const od = new Date(o.updatedAt || o.createdAt)
+        return od >= dayStart && od < dayEnd
+      })
+
+      days.push({
+        day: dayNames[dayStart.getDay()],
+        revenue: dayOrders.filter(o => o.status === 'delivered').reduce((s, o) => s + (o.total || 0), 0),
+        orders: dayOrders.length,
+      })
+    }
+    return days
+  }, [orders])
 
   const statCards = [
     {
       label: 'Tổng doanh thu',
       value: formatCurrency(stats.totalRevenue),
+      sub: `Hôm nay: ${formatCurrency(stats.todayRevenue)}`,
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
       trend: stats.revenueGrowth,
-      trendUp: true,
+      trendUp: stats.revenueGrowth >= 0,
     },
     {
       label: 'Đơn hàng',
       value: stats.totalOrders.toLocaleString(),
+      sub: `Hôm nay: ${stats.todayOrders} đơn`,
       icon: ShoppingBag,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
       trend: stats.ordersGrowth,
-      trendUp: true,
+      trendUp: stats.ordersGrowth >= 0,
     },
     {
       label: 'Người dùng',
       value: stats.totalUsers.toLocaleString(),
+      sub: 'Tổng khách hàng',
       icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
@@ -71,6 +138,7 @@ export default function AdminDashboardPage() {
     {
       label: 'Món ăn',
       value: stats.totalFoods.toLocaleString(),
+      sub: 'Trong thực đơn',
       icon: UtensilsCrossed,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
@@ -82,7 +150,7 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Tổng quan hệ thống ngày hôm nay</p>
+        <p className="text-gray-500 text-sm mt-1">Tổng quan hệ thống</p>
       </div>
 
       {/* Stats Cards */}
@@ -99,7 +167,7 @@ export default function AdminDashboardPage() {
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${card.bgColor}`}>
                 <card.icon className={`w-5 h-5 ${card.color}`} />
               </div>
-              {card.trend !== undefined && (
+              {card.trend !== undefined && card.trend !== 0 && (
                 <div className={`flex items-center gap-1 text-xs font-medium ${card.trendUp ? 'text-green-600' : 'text-red-600'}`}>
                   {card.trendUp ? (
                     <ArrowUpRight className="w-3 h-3" />
@@ -111,7 +179,7 @@ export default function AdminDashboardPage() {
               )}
             </div>
             <p className="text-2xl font-bold text-gray-900 mt-3">{card.value}</p>
-            <p className="text-sm text-gray-500 mt-0.5">{card.label}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{card.sub || card.label}</p>
           </motion.div>
         ))}
       </div>

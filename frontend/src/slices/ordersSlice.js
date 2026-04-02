@@ -115,7 +115,7 @@ export const acceptOrder = createAsyncThunk(
   'orders/acceptOrder',
   async (orderId, { rejectWithValue }) => {
     try {
-      const res = await axiosClient.post(`/orders/${orderId}/accept`)
+      const res = await axiosClient.patch(`/orders/${orderId}/status`, { status: 'picking' })
       return res.data.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to accept order')
@@ -128,7 +128,7 @@ export const completeOrder = createAsyncThunk(
   'orders/completeOrder',
   async (orderId, { rejectWithValue }) => {
     try {
-      const res = await axiosClient.post(`/orders/${orderId}/complete`)
+      const res = await axiosClient.patch(`/orders/${orderId}/status`, { status: 'delivered' })
       return res.data.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to complete order')
@@ -192,21 +192,41 @@ const ordersSlice = createSlice({
     })
 
     // Update Order Status
+    builder.addCase(updateOrderStatus.pending, (state) => {
+      state.loading = true
+      state.error = null
+    })
     builder.addCase(updateOrderStatus.fulfilled, (state, action) => {
+      state.loading = false
       const idx = state.orders.findIndex((o) => o._id === action.payload._id)
       if (idx >= 0) state.orders[idx] = action.payload
       if (state.currentOrder?._id === action.payload._id) {
         state.currentOrder = action.payload
       }
     })
+    builder.addCase(updateOrderStatus.rejected, (state, action) => {
+      state.loading = false
+      state.error = action.error.message
+    })
 
     // Cancel Order
+    builder.addCase(cancelOrder.pending, (state) => {
+      state.loading = true
+      state.error = null
+    })
     builder.addCase(cancelOrder.fulfilled, (state, action) => {
-      const idx = state.orders.findIndex((o) => o._id === action.payload._id)
-      if (idx >= 0) state.orders[idx] = action.payload
-      if (state.currentOrder?._id === action.payload._id) {
-        state.currentOrder = action.payload
+      state.loading = false
+      if (action.payload) {
+        const idx = state.orders.findIndex((o) => o._id === action.payload._id)
+        if (idx >= 0) state.orders[idx] = action.payload
+        if (state.currentOrder?._id === action.payload._id) {
+          state.currentOrder = action.payload
+        }
       }
+    })
+    builder.addCase(cancelOrder.rejected, (state, action) => {
+      state.loading = false
+      state.error = action.payload
     })
 
     // Fetch All Orders (admin)

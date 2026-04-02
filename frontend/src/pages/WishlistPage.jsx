@@ -25,18 +25,18 @@ export default function WishlistPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-cream py-8">
         <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-charcoal-900 font-heading mb-6 flex items-center gap-2">
             <Heart className="w-6 h-6 text-red-500" />
             Danh sách yêu thích
           </h1>
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Heart className="w-10 h-10 text-gray-300" />
+            <div className="w-20 h-20 bg-charcoal-100 rounded-full flex items-center justify-center mb-4">
+              <Heart className="w-10 h-10 text-charcoal-300" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-700 mb-2">Đăng nhập để xem danh sách yêu thích</h2>
-            <p className="text-gray-500 mb-6">Lưu món ăn yêu thích của bạn để mua nhanh hơn</p>
+            <h2 className="text-xl font-semibold text-charcoal-700 mb-2">Đăng nhập để xem danh sách yêu thích</h2>
+            <p className="text-charcoal-500 mb-6">Lưu món ăn yêu thích của bạn để mua nhanh hơn</p>
             <Link to="/login">
               <Button icon={LogIn}>Đăng nhập ngay</Button>
             </Link>
@@ -47,16 +47,16 @@ export default function WishlistPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-cream py-8">
       <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-charcoal-900 font-heading mb-6 flex items-center gap-2">
           <Heart className="w-6 h-6 text-red-500" />
           Danh sách yêu thích
-          <span className="text-sm font-normal text-gray-500">({items.length} món)</span>
+          <span className="text-sm font-normal text-charcoal-500">({items.length} món)</span>
         </h1>
 
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Đang tải...</div>
+          <div className="text-center py-20 text-charcoal-400">Đang tải...</div>
         ) : items.length === 0 ? (
           <EmptyState
             icon={Heart}

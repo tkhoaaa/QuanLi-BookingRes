@@ -12,7 +12,7 @@ import { formatCurrency, formatDate } from '../lib/utils'
 
 export default function OrderHistoryPage() {
   const dispatch = useDispatch()
-  const { orders, loading } = useSelector((state) => state.orders)
+  const { orders, loading, pagination } = useSelector((state) => state.orders)
   const [page, setPage] = useState(1)
 
   useEffect(() => {
@@ -123,9 +123,9 @@ export default function OrderHistoryPage() {
         {orders.length > 0 && (
           <div className="mt-6 flex justify-center">
             <Pagination
-              currentPage={page}
-              totalPages={Math.ceil((orders.length || 1) / 10)}
-              onPageChange={setPage}
+              currentPage={pagination.page || page}
+              totalPages={Math.ceil((pagination.total || 0) / 10) || 1}
+              onPageChange={(p) => setPage(p)}
             />
           </div>
         )}

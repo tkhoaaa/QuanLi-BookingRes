@@ -122,11 +122,11 @@ export default function HomePage() {
               {/* Quick stats */}
               <div className="flex gap-6 mt-8 text-white/70 text-sm">
                 <div>
-                  <span className="text-white font-bold text-lg">500+</span> Món ăn
+                  <span className="text-white font-bold text-lg">50+</span> Món ăn
                 </div>
                 <div className="w-px bg-white/20" />
                 <div>
-                  <span className="text-white font-bold text-lg">50k+</span> Khách hàng
+                  <span className="text-white font-bold text-lg">1k+</span> Khách hàng
                 </div>
                 <div className="w-px bg-white/20" />
                 <div>

@@ -49,7 +49,8 @@ export default function ShipperHistoryPage() {
         />
       ) : (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="text-left text-gray-500 bg-gray-50 border-b">
                 <th className="px-4 py-3 font-medium">Mã đơn</th>
@@ -101,6 +102,7 @@ export default function ShipperHistoryPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

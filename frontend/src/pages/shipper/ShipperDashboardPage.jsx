@@ -12,7 +12,7 @@ import {
   Navigation,
 } from 'lucide-react'
 import { fetchAllOrders, acceptOrder, completeOrder } from '../../slices/ordersSlice'
-import { socket } from '../../lib/socket'
+import { socket, initSocket } from '../../lib/socket'
 import { ORDER_STATUS } from '../../constants'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Button from '../../components/ui/Button'
@@ -28,11 +28,44 @@ export default function ShipperDashboardPage() {
   const [activeTab, setActiveTab] = useState('pending')
   const [actionLoading, setActionLoading] = useState(null)
 
+  const isToday = (date) => {
+    const d = new Date(date)
+    const today = new Date()
+    return d.toDateString() === today.toDateString()
+  }
+
+  const todayDeliveries = orders.filter(
+    (o) => o.status === 'delivered' && o.shipper?._id === user?._id && isToday(o.updatedAt)
+  ).length
+
   useEffect(() => {
+    initSocket()
     dispatch(fetchAllOrders({ limit: 100 }))
     socket.emit('joinShipperRoom')
+
+    const handleNewDelivery = (order) => {
+      toast.success(`Bạn có đơn giao hàng mới: #${order._id?.slice(-8).toUpperCase()}`)
+      dispatch(fetchAllOrders({ limit: 100 }))
+    }
+
+    const handleOrderStatusUpdate = (updatedOrder) => {
+      dispatch(fetchAllOrders({ limit: 100 }))
+    }
+
+    const handleOrderAssigned = (order) => {
+      toast.success(`Đơn hàng #${order._id?.slice(-8).toUpperCase()} đã được giao cho bạn`)
+      dispatch(fetchAllOrders({ limit: 100 }))
+    }
+
+    socket.on('newDelivery', handleNewDelivery)
+    socket.on('orderStatusUpdate', handleOrderStatusUpdate)
+    socket.on('orderAssigned', handleOrderAssigned)
+
     return () => {
       socket.emit('leaveShipperRoom')
+      socket.off('newDelivery', handleNewDelivery)
+      socket.off('orderStatusUpdate', handleOrderStatusUpdate)
+      socket.off('orderAssigned', handleOrderAssigned)
     }
   }, [dispatch])
 
@@ -124,7 +157,7 @@ export default function ShipperDashboardPage() {
               <CheckCircle className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">0</p>
+              <p className="text-2xl font-bold text-gray-900">{todayDeliveries}</p>
               <p className="text-sm text-gray-500">Đã giao hôm nay</p>
             </div>
           </div>
@@ -197,10 +230,26 @@ export default function ShipperDashboardPage() {
                   <Phone className="w-4 h-4 text-gray-400" />
                   <span className="font-medium">{order.shippingAddress?.name}</span>
                   <span className="text-gray-500">{order.shippingAddress?.phone}</span>
+                  <a
+                    href={`tel:${order.shippingAddress?.phone}`}
+                    className="ml-auto flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Gọi
+                  </a>
                 </div>
                 <div className="flex items-start gap-2 text-sm">
                   <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                  <span className="text-gray-600">{order.shippingAddress?.address}</span>
+                  <span className="text-gray-600 flex-1">{order.shippingAddress?.address}</span>
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(order.shippingAddress?.address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    Chỉ đường
+                  </a>
                 </div>
                 {order.note && (
                   <div className="flex items-start gap-2 text-sm text-gray-500 italic">
@@ -237,7 +286,7 @@ export default function ShipperDashboardPage() {
                 </span>
                 {activeTab === 'pending' ? (
                   <Button
-                    size="sm"
+                    size="lg"
                     variant="secondary"
                     onClick={() => handleAccept(order._id)}
                     loading={actionLoading === order._id}
@@ -247,7 +296,7 @@ export default function ShipperDashboardPage() {
                   </Button>
                 ) : (
                   <Button
-                    size="sm"
+                    size="lg"
                     variant="secondary"
                     onClick={() => handleComplete(order._id)}
                     loading={actionLoading === order._id}

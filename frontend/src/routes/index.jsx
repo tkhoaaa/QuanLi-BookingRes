@@ -15,6 +15,7 @@ import RegisterShipperPage from '../pages/RegisterShipperPage'
 import ProfilePage from '../pages/ProfilePage'
 import OrderHistoryPage from '../pages/OrderHistoryPage'
 import OrderTrackingPage from '../pages/OrderTrackingPage'
+import OrderSuccessPage from '../pages/OrderSuccessPage'
 import WishlistPage from '../pages/WishlistPage'
 import NotificationsPage from '../pages/NotificationsPage'
 import NotFoundPage from '../pages/NotFoundPage'
@@ -23,6 +24,7 @@ import NotFoundPage from '../pages/NotFoundPage'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import AdminFoodsPage from '../pages/admin/AdminFoodsPage'
 import AdminOrdersPage from '../pages/admin/AdminOrdersPage'
+import AdminOrderDetailPage from '../pages/admin/AdminOrderDetailPage'
 import AdminUsersPage from '../pages/admin/AdminUsersPage'
 import AdminPromosPage from '../pages/admin/AdminPromosPage'
 import AdminBranchesPage from '../pages/admin/AdminBranchesPage'
@@ -62,6 +64,10 @@ export default function AppRoutes() {
           element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>}
         />
         <Route
+          path="orders/:id/success"
+          element={<ProtectedRoute><OrderSuccessPage /></ProtectedRoute>}
+        />
+        <Route
           path="wishlist"
           element={<ProtectedRoute><WishlistPage /></ProtectedRoute>}
         />
@@ -77,6 +83,7 @@ export default function AppRoutes() {
         <Route index element={<AdminDashboardPage />} />
         <Route path="foods" element={<AdminFoodsPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="orders/:id" element={<AdminOrderDetailPage />} />
         <Route path="users" element={<AdminUsersPage />} />
         <Route path="promos" element={<AdminPromosPage />} />
         <Route path="branches" element={<AdminBranchesPage />} />

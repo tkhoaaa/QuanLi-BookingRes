@@ -21,10 +21,10 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-cream py-8">
       <div className="max-w-3xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-charcoal-900 font-heading flex items-center gap-2">
             <Bell className="w-6 h-6 text-primary" />
             Thông báo
             {unreadCount > 0 && (
@@ -58,29 +58,29 @@ export default function NotificationsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03 }}
                 onClick={() => !notif.isRead && handleMarkRead(notif._id || index)}
-                className={`bg-white rounded-xl p-4 shadow-sm cursor-pointer transition-shadow hover:shadow-md ${
+                className={`bg-white rounded-2xl p-4 shadow-card cursor-pointer transition-shadow hover:shadow-card-hover ${
                   !notif.isRead ? 'border-l-4 border-primary' : ''
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    !notif.isRead ? 'bg-primary/10' : 'bg-gray-100'
+                    !notif.isRead ? 'bg-primary/10' : 'bg-charcoal-100'
                   }`}>
-                    <Bell className={`w-5 h-5 ${!notif.isRead ? 'text-primary' : 'text-gray-400'}`} />
+                    <Bell className={`w-5 h-5 ${!notif.isRead ? 'text-primary' : 'text-charcoal-400'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h4 className={`text-sm font-medium ${!notif.isRead ? 'text-gray-900' : 'text-gray-600'}`}>
+                      <h4 className={`text-sm font-medium ${!notif.isRead ? 'text-charcoal-900' : 'text-charcoal-600'}`}>
                         {notif.title || 'Thông báo'}
                       </h4>
                       <div className="flex items-center gap-2">
-                        <Clock className="w-3 h-3 text-gray-400" />
-                        <span className="text-xs text-gray-400">
+                        <Clock className="w-3 h-3 text-charcoal-400" />
+                        <span className="text-xs text-charcoal-400">
                           {formatRelativeTime(notif.createdAt)}
                         </span>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">{notif.message || notif.body}</p>
+                    <p className="text-sm text-charcoal-500 mt-1">{notif.message || notif.body}</p>
                     {notif.actionUrl && (
                       <a
                         href={notif.actionUrl}

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
-import { Search, Eye, UserPlus } from 'lucide-react'
-import { fetchAllOrders, updateOrderStatus } from '../../slices/ordersSlice'
+import { Search, Eye, UserPlus, Truck } from 'lucide-react'
+import { fetchAllOrders, updateOrderStatus, assignShipper } from '../../slices/ordersSlice'
 import { ORDER_STATUS } from '../../constants'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Button from '../../components/ui/Button'
@@ -12,10 +12,11 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import { formatCurrency, formatDate } from '../../lib/utils'
 import toast from 'react-hot-toast'
+import axiosClient from '../../api/axiosClient'
 
 export default function AdminOrdersPage() {
   const dispatch = useDispatch()
-  const { orders, loading } = useSelector((state) => state.orders)
+  const { orders, loading, pagination } = useSelector((state) => state.orders)
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -23,6 +24,16 @@ export default function AdminOrdersPage() {
   const [updateStatusId, setUpdateStatusId] = useState(null)
   const [newStatus, setNewStatus] = useState('')
   const [loadingUpdate, setLoadingUpdate] = useState(false)
+  const [shippers, setShippers] = useState([])
+  const [assignShipperId, setAssignShipperId] = useState(null)
+  const [selectedShipper, setSelectedShipper] = useState('')
+  const [loadingAssign, setLoadingAssign] = useState(false)
+
+  useEffect(() => {
+    axiosClient.get('/admin/users?role=shipper&limit=100').then(res => {
+      setShippers(res.data.data || [])
+    }).catch(() => setShippers([]))
+  }, [])
 
   useEffect(() => {
     dispatch(fetchAllOrders({ page, limit: 20, status: statusFilter, search }))
@@ -44,6 +55,26 @@ export default function AdminOrdersPage() {
       toast.error(error || 'Cập nhật thất bại')
     } finally {
       setLoadingUpdate(false)
+    }
+  }
+
+  const handleAssignShipper = (orderId) => {
+    setAssignShipperId(orderId)
+    const order = orders.find(o => o._id === orderId)
+    setSelectedShipper(order?.shipper?._id || '')
+  }
+
+  const confirmAssignShipper = async () => {
+    if (!assignShipperId) return
+    setLoadingAssign(true)
+    try {
+      await dispatch(assignShipper({ orderId: assignShipperId, shipperId: selectedShipper || null })).unwrap()
+      toast.success(selectedShipper ? 'Gán shipper thành công' : 'Đã hủy gán shipper')
+      setAssignShipperId(null)
+    } catch (error) {
+      toast.error(error || 'Gán shipper thất bại')
+    } finally {
+      setLoadingAssign(false)
     }
   }
 
@@ -105,7 +136,7 @@ export default function AdminOrdersPage() {
                   <th className="px-4 py-3 font-medium">Mã đơn</th>
                   <th className="px-4 py-3 font-medium">Khách hàng</th>
                   <th className="px-4 py-3 font-medium">Tổng tiền</th>
-                  <th className="px-4 py-3 font-medium">Thanh toán</th>
+                  <th className="px-4 py-3 font-medium">Shipper</th>
                   <th className="px-4 py-3 font-medium">Trạng thái</th>
                   <th className="px-4 py-3 font-medium">Ngày đặt</th>
                   <th className="px-4 py-3 font-medium">Hành động</th>
@@ -127,7 +158,23 @@ export default function AdminOrdersPage() {
                       <p className="text-xs text-gray-500">{order.shippingAddress?.phone || order.user?.phone || '-'}</p>
                     </td>
                     <td className="px-4 py-3 text-primary font-medium">{formatCurrency(order.total)}</td>
-                    <td className="px-4 py-3 text-gray-600 capitalize">{order.paymentMethod}</td>
+                    <td className="px-4 py-3">
+                      {order.shipper ? (
+                        <div className="flex items-center gap-1">
+                          <Truck className="w-3.5 h-3.5 text-green-600" />
+                          <span className="text-xs text-green-700 font-medium">{order.shipper.name}</span>
+                        </div>
+                      ) : order.fulfillmentType === 'pickup' ? (
+                        <span className="text-xs text-gray-400 italic">Tự lấy</span>
+                      ) : (
+                        <button
+                          onClick={() => handleAssignShipper(order._id)}
+                          className="text-xs px-2 py-1 bg-amber-50 text-amber-700 rounded-full hover:bg-amber-100 transition-colors"
+                        >
+                          + Gán shipper
+                        </button>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <select
                         value={order.status}
@@ -165,7 +212,7 @@ export default function AdminOrdersPage() {
       {orders.length > 0 && (
         <Pagination
           currentPage={page}
-          totalPages={Math.ceil(orders.length / 20) || 1}
+          totalPages={Math.ceil((pagination.total || 0) / 20) || 1}
           onPageChange={setPage}
         />
       )}
@@ -178,6 +225,31 @@ export default function AdminOrdersPage() {
         message="Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng này?"
         confirmLabel="Cập nhật"
         loading={loadingUpdate}
+      />
+
+      {/* Shipper Assignment Dialog */}
+      <ConfirmDialog
+        isOpen={!!assignShipperId}
+        onClose={() => setAssignShipperId(null)}
+        onConfirm={confirmAssignShipper}
+        title="Gán shipper"
+        message={
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">Chọn shipper cho đơn hàng này:</p>
+            <select
+              value={selectedShipper}
+              onChange={(e) => setSelectedShipper(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            >
+              <option value="">-- Hủy gán shipper --</option>
+              {shippers.map((s) => (
+                <option key={s._id} value={s._id}>{s.name} {s.phone ? `(${s.phone})` : ''}</option>
+              ))}
+            </select>
+          </div>
+        }
+        confirmLabel={selectedShipper ? 'Gán shipper' : 'Hủy gán'}
+        loading={loadingAssign}
       />
     </div>
   )

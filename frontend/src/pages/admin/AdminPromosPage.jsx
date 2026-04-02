@@ -39,7 +39,7 @@ export default function AdminPromosPage() {
   const fetchPromos = async () => {
     setLoading(true)
     try {
-      const res = await axiosClient.get('/promos')
+      const res = await axiosClient.get('/coupons')
       let data = res.data.data || res.data || []
       if (search) {
         data = data.filter((p) => p.code?.toLowerCase().includes(search.toLowerCase()))
@@ -94,10 +94,10 @@ export default function AdminPromosPage() {
       }
 
       if (editingPromo) {
-        await axiosClient.put(`/promos/${editingPromo._id}`, payload)
+        await axiosClient.put(`/coupons/${editingPromo._id}`, payload)
         toast.success('Cập nhật mã giảm giá thành công')
       } else {
-        await axiosClient.post('/promos', payload)
+        await axiosClient.post('/coupons', payload)
         toast.success('Tạo mã giảm giá thành công')
       }
       setIsModalOpen(false)
@@ -113,7 +113,7 @@ export default function AdminPromosPage() {
     if (!deleteId) return
     setDeleteLoading(true)
     try {
-      await axiosClient.delete(`/promos/${deleteId}`)
+      await axiosClient.delete(`/coupons/${deleteId}`)
       toast.success('Xóa mã giảm giá thành công')
       setDeleteId(null)
       fetchPromos()
