@@ -34,6 +34,8 @@ import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage'
 // Shipper pages
 import ShipperDashboardPage from '../pages/shipper/ShipperDashboardPage'
 import ShipperHistoryPage from '../pages/shipper/ShipperHistoryPage'
+import ShipperEarningsPage from '../pages/shipper/ShipperEarningsPage'
+import DeliveryDetailPage from '../pages/shipper/DeliveryDetailPage'
 
 // Route guards
 import ProtectedRoute from './ProtectedRoute'
@@ -97,6 +99,8 @@ export default function AppRoutes() {
       <Route path="/shipper" element={<ShipperRoute><ShipperLayout /></ShipperRoute>}>
         <Route index element={<ShipperDashboardPage />} />
         <Route path="history" element={<ShipperHistoryPage />} />
+        <Route path="earnings" element={<ShipperEarningsPage />} />
+        <Route path="order/:id" element={<DeliveryDetailPage />} />
       </Route>
     </Routes>
   )

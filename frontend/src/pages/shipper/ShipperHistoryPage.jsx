@@ -2,22 +2,18 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
-import { History, Eye } from 'lucide-react'
+import { History, Package, ArrowRight } from 'lucide-react'
 import { fetchAllOrders } from '../../slices/ordersSlice'
-import StatusBadge from '../../components/ui/StatusBadge'
-import EmptyState from '../../components/ui/EmptyState'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import { formatCurrency, formatDateTime } from '../../lib/utils'
+import { formatCurrency, formatDate } from '../../lib/utils'
 
 export default function ShipperHistoryPage() {
   const dispatch = useDispatch()
   const { orders, loading } = useSelector((state) => state.orders)
   const { user } = useSelector((state) => state.auth)
 
-  const [page, setPage] = useState(1)
-
   useEffect(() => {
-    dispatch(fetchAllOrders({ limit: 100 }))
+    dispatch(fetchAllOrders({ limit: 500 }))
   }, [dispatch])
 
   const myDeliveredOrders = orders.filter(
@@ -26,14 +22,73 @@ export default function ShipperHistoryPage() {
       o.shipper?._id === user?._id
   )
 
+  // Week stats
+  const now = new Date()
+  const startOfWeek = new Date(now)
+  startOfWeek.setDate(now.getDate() - now.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+
+  const weekOrders = myDeliveredOrders.filter(
+    (o) => o.status === 'delivered' && new Date(o.updatedAt) >= startOfWeek
+  )
+  const weekEarnings = weekOrders.reduce((sum, o) => sum + (o.total || 0), 0)
+  const weekCount = weekOrders.length
+
+  // Group orders by date
+  const groupedOrders = []
+  const map = new Map()
+  const sortedOrders = [...myDeliveredOrders]
+    .filter((o) => o.status === 'delivered')
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+
+  sortedOrders.forEach((order) => {
+    const d = new Date(order.updatedAt)
+    const today = new Date()
+    const yesterday = new Date(today)
+    yesterday.setDate(today.getDate() - 1)
+
+    let label
+    if (d.toDateString() === today.toDateString()) {
+      label = 'Hom nay'
+    } else if (d.toDateString() === yesterday.toDateString()) {
+      label = 'Hom qua'
+    } else {
+      label = formatDate(order.updatedAt)
+    }
+
+    if (!map.has(label)) {
+      map.set(label, { label, orders: [], earnings: 0 })
+      groupedOrders.push(map.get(label))
+    }
+    map.get(label).orders.push(order)
+    map.get(label).earnings += order.total || 0
+  })
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Lịch sử giao hàng</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {myDeliveredOrders.length} đơn hàng đã giao
+        <h1 className="text-xl md:text-2xl font-bold text-charcoal-900">Lich su giao hang</h1>
+        <p className="text-charcoal-500 text-sm mt-0.5">
+          {myDeliveredOrders.filter((o) => o.status === 'delivered').length} don da giao
         </p>
+      </div>
+
+      {/* Week quick stats */}
+      <div className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+            <History className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm text-charcoal-500">Tuan nay</p>
+            <p className="font-bold text-charcoal-900">{weekCount} don</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-charcoal-500">Thu nhap</p>
+          <p className="font-bold text-green-600">{formatCurrency(weekEarnings)}</p>
+        </div>
       </div>
 
       {/* Orders list */}
@@ -41,68 +96,78 @@ export default function ShipperHistoryPage() {
         <div className="flex justify-center py-20">
           <LoadingSpinner />
         </div>
-      ) : myDeliveredOrders.length === 0 ? (
-        <EmptyState
-          icon={History}
-          title="Chưa có đơn hàng nào đã giao"
-          description="Các đơn hàng bạn đã giao thành công sẽ hiển thị ở đây"
-        />
+      ) : groupedOrders.length === 0 ? (
+        <div className="bg-white rounded-xl p-10 md:p-12 text-center">
+          <Package className="w-14 h-14 text-charcoal-200 mx-auto mb-4" />
+          <p className="text-charcoal-500">
+            Chua co don hang nao da giao
+          </p>
+          <p className="text-charcoal-400 text-sm mt-1">
+            Cac don ban da giao thanh cong se hien thi o day
+          </p>
+        </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[640px]">
-            <thead>
-              <tr className="text-left text-gray-500 bg-gray-50 border-b">
-                <th className="px-4 py-3 font-medium">Mã đơn</th>
-                <th className="px-4 py-3 font-medium">Khách hàng</th>
-                <th className="px-4 py-3 font-medium">Địa chỉ</th>
-                <th className="px-4 py-3 font-medium">Tổng tiền</th>
-                <th className="px-4 py-3 font-medium">Trạng thái</th>
-                <th className="px-4 py-3 font-medium">Thời gian giao</th>
-                <th className="px-4 py-3 font-medium">Xem</th>
-              </tr>
-            </thead>
-            <tbody>
-              {myDeliveredOrders.map((order, index) => (
-                <motion.tr
-                  key={order._id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.03 }}
-                  className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    #{order._id?.slice(-8).toUpperCase()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{order.shippingAddress?.name || order.user?.name || 'Khách'}</p>
-                    <p className="text-xs text-gray-500">{order.shippingAddress?.phone || order.user?.phone || '-'}</p>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">
-                    {order.shippingAddress?.address || '-'}
-                  </td>
-                  <td className="px-4 py-3 text-primary font-medium">
-                    {formatCurrency(order.total)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={order.status} />
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">
-                    {formatDateTime(order.updatedAt)}
-                  </td>
-                  <td className="px-4 py-3">
+        <div className="space-y-4">
+          {groupedOrders.map((group) => (
+            <div key={group.label}>
+              {/* Date separator */}
+              <div className="flex items-center justify-between mb-2 px-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-charcoal-700">{group.label}</span>
+                  <span className="text-xs text-charcoal-400 bg-charcoal-100 px-2 py-0.5 rounded-full">
+                    {group.orders.length} don
+                  </span>
+                </div>
+                <span className="text-sm font-medium text-green-600">
+                  +{formatCurrency(group.earnings)}
+                </span>
+              </div>
+
+              {/* Cards */}
+              <div className="space-y-2">
+                {group.orders.map((order, index) => (
+                  <motion.div
+                    key={order._id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.03 }}
+                  >
                     <Link
-                      to={`/orders/${order._id}`}
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg inline-block transition-colors"
+                      to={`/shipper/order/${order._id}`}
+                      className="block bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow border border-transparent hover:border-primary/10"
                     >
-                      <Eye className="w-4 h-4" />
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-bold text-charcoal-900 text-sm">
+                              #{order._id?.slice(-8).toUpperCase()}
+                            </p>
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                              Da giao
+                            </span>
+                          </div>
+                          <p className="text-xs text-charcoal-500 truncate">
+                            {order.shippingAddress?.address}
+                          </p>
+                          <p className="text-xs text-charcoal-400 mt-0.5">
+                            {formatDate(order.updatedAt, { hour: '2-digit', minute: '2-digit' })} - {order.items?.length || 0} mon
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                          <div className="text-right">
+                            <p className="font-bold text-green-600 text-sm">
+                              +{formatCurrency(order.total)}
+                            </p>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-charcoal-300" />
+                        </div>
+                      </div>
                     </Link>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
