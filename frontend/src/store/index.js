@@ -10,6 +10,8 @@ import auditReducer from '../slices/auditSlice'
 import loyaltyReducer from '../slices/loyaltySlice'
 import analyticsReducer from '../slices/analyticsSlice'
 import reservationReducer from '../slices/reservationSlice'
+import reviewReducer from '../slices/reviewSlice'
+import adminReviewReducer from '../slices/adminReviewSlice'
 
 export const store = configureStore({
   reducer: {
@@ -24,5 +26,7 @@ export const store = configureStore({
     loyalty: loyaltyReducer,
     analytics: analyticsReducer,
     reservation: reservationReducer,
+    reviews: reviewReducer,
+    adminReview: adminReviewReducer,
   },
 })

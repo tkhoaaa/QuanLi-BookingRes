@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import {
   Plus, Edit2, Trash2, Search, Image as ImageIcon,
   Download, Tag, Layers, X, Check, UtensilsCrossed,
+  MapPin,
 } from 'lucide-react'
 import { fetchFoods, createFood, updateFood, deleteFood } from '../../slices/foodsSlice'
 import FoodFormModal from '../../features/foods/FoodFormModal'
@@ -15,6 +16,7 @@ import Pagination from '../../components/ui/Pagination'
 import { formatCurrency, resolveFoodImage } from '../../lib/utils'
 import { CATEGORIES } from '../../constants'
 import toast from 'react-hot-toast'
+import axiosClient from '../../api/axiosClient'
 
 const PAGE_SIZE = 20
 
@@ -61,6 +63,16 @@ export default function AdminFoodsPage() {
   const [addingTopping, setAddingTopping] = useState(false)
   const [deleteToppingId, setDeleteToppingId] = useState(null)
   const [deleteToppingLoading, setDeleteToppingLoading] = useState(false)
+
+  // Branch filter
+  const [branches, setBranches] = useState([])
+  const [branchFilter, setBranchFilter] = useState('')
+
+  useEffect(() => {
+    axiosClient.get('/branches').then(res => {
+      setBranches(res.data.data || [])
+    }).catch(() => setBranches([]))
+  }, [])
 
   // Fetch when page, search, or availability changes
   useEffect(() => {
@@ -361,6 +373,21 @@ export default function AdminFoodsPage() {
                 </button>
               ))}
             </div>
+            {branches.length > 0 && (
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gray-400" />
+                <select
+                  value={branchFilter}
+                  onChange={(e) => { setBranchFilter(e.target.value) }}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white"
+                >
+                  <option value="">Tất cả chi nhánh</option>
+                  {branches.map((b) => (
+                    <option key={b._id} value={b._id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Table */}
@@ -389,6 +416,7 @@ export default function AdminFoodsPage() {
                         <th className="px-4 py-3 font-medium">Danh mục</th>
                         <th className="px-4 py-3 font-medium">Giá</th>
                         <th className="px-4 py-3 font-medium">Trạng thái</th>
+                        <th className="px-4 py-3 font-medium">Chi nhánh</th>
                         <th className="px-4 py-3 font-medium">Hành động</th>
                       </tr>
                     </thead>
@@ -440,6 +468,19 @@ export default function AdminFoodsPage() {
                             }`}>
                               {food.isAvailable ? 'Đang bán' : 'Tạm ngừng'}
                             </span>
+                          </td>
+                          {/* Branch */}
+                          <td className="px-4 py-3">
+                            {food.branchId || food.branch ? (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-orange-500" />
+                                <span className="text-xs text-gray-600">
+                                  {typeof food.branch === 'object' ? food.branch.name : 'Chi nhánh'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400">Tất cả</span>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">

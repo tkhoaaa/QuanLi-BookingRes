@@ -14,9 +14,13 @@ import {
   BarChart3,
   PieChart as PieChartIcon,
   Loader2,
+  MapPin,
+  GitCompare,
+  BarChart2,
+  X,
 } from 'lucide-react'
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, PieChart, Pie, Legend,
 } from 'recharts'
 import { fetchAnalyticsOverview } from '../../slices/analyticsSlice'
@@ -49,15 +53,24 @@ const CATEGORY_COLORS = [
 
 export default function AdminDashboardPage() {
   const dispatch = useDispatch()
-  const { overview, revenueChart, topItems, categoryRevenue, statusStats, loading, currentRange } = useSelector((state) => state.analytics)
+  const { overview, revenueChart, topItems, categoryRevenue, statusStats, branchComparison, loading, currentRange, currentBranchId } = useSelector((state) => state.analytics)
   const { orders } = useSelector((state) => state.orders)
   const { foods } = useSelector((state) => state.foods)
   const [dateRange, setDateRange] = useState('7d')
+  const [branches, setBranches] = useState([])
+  const [selectedBranchId, setSelectedBranchId] = useState('')
+  const [showCompare, setShowCompare] = useState(false)
 
   useEffect(() => {
-    dispatch(fetchAnalyticsOverview({ range: dateRange }))
+    axiosClient.get('/branches').then(res => {
+      setBranches(res.data.data || [])
+    }).catch(() => setBranches([]))
+  }, [])
+
+  useEffect(() => {
+    dispatch(fetchAnalyticsOverview({ range: dateRange, branchId: selectedBranchId }))
     dispatch(fetchAllOrders({ limit: 500 }))
-  }, [dispatch, dateRange])
+  }, [dispatch, dateRange, selectedBranchId])
 
   // Chart data from API
   const chartData = revenueChart.map(d => ({
@@ -175,15 +188,76 @@ export default function AdminDashboardPage() {
     return null
   }
 
+  const selectedBranchName = selectedBranchId
+    ? branches.find(b => b._id === selectedBranchId)?.name
+    : null
+
   return (
     <div className="space-y-6">
       {/* Header + Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-1">Tổng quan hệ thống</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            {selectedBranchName && (
+              <>
+                <span className="text-gray-300">/</span>
+                <span className="text-lg font-semibold text-orange-600 flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  {selectedBranchName}
+                </span>
+              </>
+            )}
+            {!selectedBranchName && (
+              <>
+                <span className="text-gray-300">/</span>
+                <span className="text-sm font-medium text-gray-500">Tất cả chi nhánh</span>
+              </>
+            )}
+          </div>
+          <p className="text-gray-500 text-sm mt-0.5">Tổng quan hệ thống</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Branch Selector */}
+          {branches.length > 0 && (
+            <>
+              <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1">
+                <MapPin className="w-4 h-4 text-gray-400" />
+                <select
+                  value={selectedBranchId}
+                  onChange={(e) => setSelectedBranchId(e.target.value)}
+                  className="text-sm border-0 bg-transparent focus:outline-none cursor-pointer text-gray-700"
+                >
+                  <option value="">Tất cả chi nhánh</option>
+                  {branches.map((b) => (
+                    <option key={b._id} value={b._id}>{b.name}</option>
+                  ))}
+                </select>
+                {selectedBranchId && (
+                  <button
+                    onClick={() => setSelectedBranchId('')}
+                    className="ml-1 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Compare Toggle */}
+              <button
+                onClick={() => setShowCompare(!showCompare)}
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                  showCompare
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <GitCompare className="w-4 h-4" />
+                So sánh chi nhánh
+              </button>
+            </>
+          )}
+
           {/* Date Range Selector */}
           <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
             <Calendar className="w-4 h-4 text-gray-400 ml-2" />
@@ -278,16 +352,16 @@ export default function AdminDashboardPage() {
                 {loading ? 'Đang tải...' : dateRange === 'today' ? 'Hôm nay' : dateRange === '7d' ? '7 ngày qua' : '30 ngày qua'}
               </p>
             </div>
-            <BarChart3 className="w-5 h-5 text-orange-500" />
+            <RechartsBarChart3 className="w-5 h-5 text-orange-500" />
           </div>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <RechartsBarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
               <XAxis dataKey={dateRange === '30d' ? 'day' : 'shortDay'} fontSize={11} tickLine={false} />
               <YAxis fontSize={11} tickLine={false} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
               <Tooltip content={<CustomTooltip formatter={(v) => formatCurrency(v)} />} />
               <Bar dataKey="revenue" name="Doanh thu" fill="#f97316" radius={[4, 4, 0, 0]} />
-            </BarChart>
+            </RechartsBarChart>
           </ResponsiveContainer>
         </motion.div>
 
@@ -307,13 +381,13 @@ export default function AdminDashboardPage() {
             <ShoppingBag className="w-5 h-5 text-blue-500" />
           </div>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <RechartsBarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
               <XAxis dataKey={dateRange === '30d' ? 'day' : 'shortDay'} fontSize={11} tickLine={false} />
               <YAxis fontSize={11} tickLine={false} allowDecimals={false} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="orders" name="Đơn hàng" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-            </BarChart>
+            </RechartsBarChart>
           </ResponsiveContainer>
         </motion.div>
       </div>
@@ -462,6 +536,86 @@ export default function AdminDashboardPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Branch Comparison */}
+      {showCompare && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white rounded-xl p-6 shadow-sm"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-semibold text-gray-900">So sánh chi nhánh</h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Top chi nhánh theo doanh thu | {DATE_RANGES.find(r => r.value === dateRange)?.label}
+              </p>
+            </div>
+            <BarChart2 className="w-5 h-5 text-purple-500" />
+          </div>
+          {branchComparison && branchComparison.length > 0 ? (
+            <>
+              <ResponsiveContainer width="100%" height={280}>
+                <RechartsBarChart
+                  data={branchComparison.map(b => ({
+                    name: b.branchName,
+                    shortName: b.branchName.length > 12 ? b.branchName.substring(0, 12) + '...' : b.branchName,
+                    revenue: b.revenue,
+                    orders: b.orderCount,
+                  }))}
+                  margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                  barCategoryGap="20%"
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis dataKey="shortName" fontSize={11} tickLine={false} />
+                  <YAxis fontSize={11} tickLine={false} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
+                  <Tooltip content={<CustomTooltip formatter={(v) => formatCurrency(v)} />} />
+                  <Bar dataKey="revenue" name="Doanh thu" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                </RechartsBarChart>
+              </ResponsiveContainer>
+              {/* Branch comparison table */}
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="pb-2 font-medium">#</th>
+                      <th className="pb-2 font-medium">Chi nhánh</th>
+                      <th className="pb-2 font-medium text-right">Doanh thu</th>
+                      <th className="pb-2 font-medium text-right">Đơn hàng</th>
+                      <th className="pb-2 font-medium text-right">TB / Đơn</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {branchComparison.slice(0, 5).map((branch, i) => (
+                      <tr key={branch.branchId} className="border-b border-gray-50">
+                        <td className="py-2">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            i === 0 ? 'bg-yellow-100 text-yellow-700' :
+                            i === 1 ? 'bg-gray-100 text-gray-600' :
+                            i === 2 ? 'bg-orange-100 text-orange-700' :
+                            'bg-gray-50 text-gray-500'
+                          }`}>
+                            {i + 1}
+                          </div>
+                        </td>
+                        <td className="py-2 font-medium text-gray-900">{branch.branchName}</td>
+                        <td className="py-2 text-right text-primary font-medium">{formatCurrency(branch.revenue)}</td>
+                        <td className="py-2 text-right text-gray-600">{branch.orderCount}</td>
+                        <td className="py-2 text-right text-gray-500">{formatCurrency(branch.avgOrderValue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
+              Chưa có dữ liệu chi nhánh
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Recent Orders */}
       <motion.div

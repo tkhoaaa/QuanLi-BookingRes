@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Star, Minus, Plus, ShoppingCart, ChevronLeft, ChevronRight, Flame, AlertCircle, Grid3x3 } from 'lucide-react'
+import { Star, Minus, Plus, ShoppingCart, ChevronLeft, ChevronRight, Flame, AlertCircle, Grid3x3, MessageSquare, Pencil } from 'lucide-react'
 import { fetchFoodById, clearCurrentFood, fetchFoods } from '../slices/foodsSlice'
 import { addItem, selectCartItems } from '../slices/cartSlice'
 import { formatCurrency, cn, resolveFoodImage } from '../lib/utils'
@@ -10,6 +10,8 @@ import Button from '../components/ui/Button'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import EmptyState from '../components/ui/EmptyState'
 import FoodCard from '../features/foods/FoodCard'
+import WriteReviewModal from '../features/reviews/WriteReviewModal'
+import ReviewList from '../features/reviews/ReviewList'
 import toast from 'react-hot-toast'
 
 export default function FoodDetailPage() {
@@ -26,6 +28,7 @@ export default function FoodDetailPage() {
   const [selectedToppings, setSelectedToppings] = useState([])
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showStickyCta, setShowStickyCta] = useState(false)
+  const [showReviewModal, setShowReviewModal] = useState(false)
   const addToCartRef = useRef(null)
 
   useEffect(() => {
@@ -370,7 +373,70 @@ export default function FoodDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Reviews Section */}
+        <div className="mt-8 pt-8 border-t border-charcoal-100">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-bold text-charcoal-900 font-heading">Đánh giá</h2>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Pencil}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  toast.error('Vui lòng đăng nhập để viết đánh giá')
+                  navigate('/login')
+                  return
+                }
+                setShowReviewModal(true)
+              }}
+            >
+              Viết đánh giá
+            </Button>
+          </div>
+
+          {/* Average rating display */}
+          {currentFood.rating > 0 && (
+            <div className="flex items-center gap-3 mb-6 bg-white rounded-xl p-4 shadow-sm">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-charcoal-900 font-heading">
+                  {currentFood.rating.toFixed(1)}
+                </div>
+                <div className="flex items-center justify-center gap-0.5 mt-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={cn(
+                        'w-4 h-4',
+                        i < Math.floor(currentFood.rating)
+                          ? 'text-amber-400 fill-amber-400'
+                          : 'text-charcoal-200'
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="h-12 w-px bg-charcoal-100 mx-1" />
+              <div className="text-sm text-charcoal-500">
+                {currentFood.reviewCount || 0} đánh giá
+              </div>
+            </div>
+          )}
+
+          <ReviewList foodId={id} />
+        </div>
       </div>
+
+      {/* Write Review Modal */}
+      <WriteReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        foodId={id}
+        foodName={currentFood.name}
+      />
 
       {/* Sticky mobile CTA */}
       <AnimatePresence>

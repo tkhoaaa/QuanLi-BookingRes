@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
-import { Search, Eye, UserPlus, Truck, ChevronUp, ChevronDown, ShoppingBag, CheckSquare, Square } from 'lucide-react'
+import { Search, Eye, UserPlus, Truck, ChevronUp, ChevronDown, ShoppingBag, CheckSquare, Square, MapPin } from 'lucide-react'
 import { fetchAllOrders, updateOrderStatus, assignShipper } from '../../slices/ordersSlice'
 import { ORDER_STATUS, ORDER_STATUS_TRANSITIONS, ORDER_STATUS_COLORS } from '../../constants'
 import StatusBadge from '../../components/ui/StatusBadge'
@@ -46,6 +46,16 @@ export default function AdminOrdersPage() {
   const [batchShipperId, setBatchShipperId] = useState('')
   const [loadingBatchAssign, setLoadingBatchAssign] = useState(false)
 
+  // Branch filter
+  const [branches, setBranches] = useState([])
+  const [branchFilter, setBranchFilter] = useState('')
+
+  useEffect(() => {
+    axiosClient.get('/branches').then(res => {
+      setBranches(res.data.data || [])
+    }).catch(() => setBranches([]))
+  }, [])
+
   useEffect(() => {
     axiosClient.get('/admin/users?role=shipper&limit=100').then(res => {
       setShippers(res.data.data || [])
@@ -53,8 +63,8 @@ export default function AdminOrdersPage() {
   }, [])
 
   useEffect(() => {
-    dispatch(fetchAllOrders({ page, limit: 20, status: statusFilter, search, sortField, sortDir }))
-  }, [page, statusFilter, search, sortField, sortDir, dispatch])
+    dispatch(fetchAllOrders({ page, limit: 20, status: statusFilter, search, sortField, sortDir, branchId: branchFilter }))
+  }, [page, statusFilter, search, sortField, sortDir, branchFilter, dispatch])
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -223,6 +233,31 @@ export default function AdminOrdersPage() {
         ))}
       </div>
 
+      {/* Branch filter */}
+      {branches.length > 0 && (
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-gray-400" />
+          <select
+            value={branchFilter}
+            onChange={(e) => { setBranchFilter(e.target.value); setPage(1) }}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white max-w-xs"
+          >
+            <option value="">Tất cả chi nhánh</option>
+            {branches.map((b) => (
+              <option key={b._id} value={b._id}>{b.name}</option>
+            ))}
+          </select>
+          {branchFilter && (
+            <button
+              onClick={() => { setBranchFilter(''); setPage(1) }}
+              className="text-xs text-red-500 hover:text-red-600"
+            >
+              Xóa
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -267,6 +302,7 @@ export default function AdminOrdersPage() {
                     </div>
                   </th>
                   <th className="px-4 py-3 font-medium">Shipper</th>
+                  <th className="px-4 py-3 font-medium">Chi nhánh</th>
                   <th className="px-4 py-3 font-medium group cursor-pointer select-none" onClick={() => handleSort('status')}>
                     <div className="flex items-center gap-1">
                       Trạng thái <SortIcon field="status" />
@@ -324,6 +360,19 @@ export default function AdminOrdersPage() {
                           >
                             + Gán shipper
                           </button>
+                        )}
+                      </td>
+                      {/* Branch */}
+                      <td className="px-4 py-3">
+                        {order.branch || order.branchId ? (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-orange-500" />
+                            <span className="text-xs text-gray-600 truncate max-w-[100px]" title={typeof order.branch === 'object' ? order.branch.name : undefined}>
+                              {typeof order.branch === 'object' ? order.branch.name : 'Chi nhánh'}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">--</span>
                         )}
                       </td>
                       <td className="px-4 py-3">

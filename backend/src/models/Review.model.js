@@ -29,11 +29,34 @@ const reviewSchema = new mongoose.Schema(
       trim: true,
       maxlength: [1000, "Comment cannot exceed 1000 characters"],
     },
+    photos: [
+      {
+        type: String,
+      },
+    ],
+    // Alias for photos, for compatibility with existing code
     images: [
       {
         type: String,
       },
     ],
+    reactions: {
+      helpful: { type: Number, default: 0 },
+      fun: { type: Number, default: 0 },
+      love: { type: Number, default: 0 },
+    },
+    repliedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    repliedAt: {
+      type: Date,
+    },
+    repliedText: {
+      type: String,
+      trim: true,
+      maxlength: [1000, "Reply cannot exceed 1000 characters"],
+    },
   },
   {
     timestamps: true,

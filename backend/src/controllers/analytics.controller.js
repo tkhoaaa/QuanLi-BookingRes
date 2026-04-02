@@ -1,6 +1,7 @@
 const Booking = require("../models/Booking.model");
 const Food = require("../models/Food.model");
 const User = require("../models/User.model");
+const Branch = require("../models/Branch.model");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiResponse = require("../utils/ApiResponse");
 
@@ -47,10 +48,16 @@ function getDateRange(range) {
 
 // GET /api/analytics/overview
 const getOverviewStats = asyncHandler(async (req, res) => {
-  const { range = "7d" } = req.query;
+  const { range = "7d", branchId } = req.query;
   const { start, end, prevStart, prevEnd } = getDateRange(range);
 
   const delivered = { status: "delivered" };
+  const baseFilter = { ...delivered, updatedAt: { $gte: start, $lt: end } };
+  const prevFilter = { ...delivered, updatedAt: { $gte: prevStart, $lt: prevEnd } };
+  if (branchId) {
+    baseFilter.branch = branchId;
+    prevFilter.branch = branchId;
+  }
 
   // Current period
   const currOrders = await Booking.find({
@@ -103,7 +110,7 @@ const getOverviewStats = asyncHandler(async (req, res) => {
 
 // GET /api/analytics/revenue
 const getRevenueChart = asyncHandler(async (req, res) => {
-  const { range = "7d" } = req.query;
+  const { range = "7d", branchId } = req.query;
   const { start, end } = getDateRange(range);
 
   let numDays;
@@ -115,10 +122,10 @@ const getRevenueChart = asyncHandler(async (req, res) => {
     numDays = 30;
   }
 
-  const bookings = await Booking.find({
-    status: "delivered",
-    updatedAt: { $gte: start, $lt: end },
-  });
+  const baseFilter = { status: "delivered", updatedAt: { $gte: start, $lt: end } }
+  if (branchId) baseFilter.branch = branchId;
+
+  const bookings = await Booking.find(baseFilter);
 
   const chartData = [];
   for (let i = numDays - 1; i >= 0; i--) {
@@ -147,13 +154,13 @@ const getRevenueChart = asyncHandler(async (req, res) => {
 
 // GET /api/analytics/top-items
 const getTopSellingItems = asyncHandler(async (req, res) => {
-  const { range = "7d", limit = 10 } = req.query;
+  const { range = "7d", limit = 10, branchId } = req.query;
   const { start, end } = getDateRange(range);
 
-  const bookings = await Booking.find({
-    status: "delivered",
-    updatedAt: { $gte: start, $lt: end },
-  }).populate("items.food", "name category images");
+  const baseFilter = { status: "delivered", updatedAt: { $gte: start, $lt: end } };
+  if (branchId) baseFilter.branch = branchId;
+
+  const bookings = await Booking.find(baseFilter).populate("items.food", "name category images");
 
   const soldCount = {};
   bookings.forEach((order) => {
@@ -183,13 +190,13 @@ const getTopSellingItems = asyncHandler(async (req, res) => {
 
 // GET /api/analytics/category-revenue
 const getCategoryRevenue = asyncHandler(async (req, res) => {
-  const { range = "7d" } = req.query;
+  const { range = "7d", branchId } = req.query;
   const { start, end } = getDateRange(range);
 
-  const bookings = await Booking.find({
-    status: "delivered",
-    updatedAt: { $gte: start, $lt: end },
-  }).populate("items.food", "category");
+  const baseFilter = { status: "delivered", updatedAt: { $gte: start, $lt: end } };
+  if (branchId) baseFilter.branch = branchId;
+
+  const bookings = await Booking.find(baseFilter).populate("items.food", "category");
 
   const catRevenue = {};
   let totalRevenue = 0;
@@ -220,12 +227,13 @@ const getCategoryRevenue = asyncHandler(async (req, res) => {
 
 // GET /api/analytics/order-status
 const getOrderStatusStats = asyncHandler(async (req, res) => {
-  const { range = "7d" } = req.query;
+  const { range = "7d", branchId } = req.query;
   const { start, end } = getDateRange(range);
 
-  const bookings = await Booking.find({
-    updatedAt: { $gte: start, $lt: end },
-  });
+  const baseFilter = { updatedAt: { $gte: start, $lt: end } };
+  if (branchId) baseFilter.branch = branchId;
+
+  const bookings = await Booking.find(baseFilter);
 
   const counts = {};
   bookings.forEach((o) => {
@@ -254,10 +262,42 @@ const getOrderStatusStats = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, result));
 });
 
+// GET /api/analytics/branch-comparison
+const getBranchComparison = asyncHandler(async (req, res) => {
+  const { range = '7d' } = req.query;
+  const { start, end } = getDateRange(range);
+
+  const branches = await Branch.find({ isActive: true }).sort('name');
+
+  const comparison = await Promise.all(
+    branches.slice(0, 5).map(async (branch) => {
+      const bookings = await Booking.find({
+        status: 'delivered',
+        updatedAt: { $gte: start, $lt: end },
+        branch: branch._id,
+      });
+      const revenue = bookings.reduce((s, o) => s + (o.total || 0), 0);
+      const orderCount = bookings.length;
+      return {
+        branchId: branch._id,
+        branchName: branch.name,
+        revenue,
+        orderCount,
+        avgOrderValue: orderCount > 0 ? Math.round(revenue / orderCount) : 0,
+      };
+    })
+  );
+
+  const sorted = comparison.sort((a, b) => b.revenue - a.revenue);
+
+  return res.status(200).json(new ApiResponse(200, sorted));
+});
+
 module.exports = {
   getOverviewStats,
   getRevenueChart,
   getTopSellingItems,
   getCategoryRevenue,
   getOrderStatusStats,
+  getBranchComparison,
 };
