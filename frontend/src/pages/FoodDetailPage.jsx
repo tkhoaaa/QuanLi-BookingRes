@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { motion } from 'framer-motion'
-import { Star, Minus, Plus, ShoppingCart, ChevronLeft, ChevronRight, Flame } from 'lucide-react'
-import { fetchFoodById, clearCurrentFood } from '../slices/foodsSlice'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Star, Minus, Plus, ShoppingCart, ChevronLeft, ChevronRight, Flame, AlertCircle, Grid3x3 } from 'lucide-react'
+import { fetchFoodById, clearCurrentFood, fetchFoods } from '../slices/foodsSlice'
 import { addItem, selectCartItems } from '../slices/cartSlice'
 import { formatCurrency, cn, resolveFoodImage } from '../lib/utils'
 import Button from '../components/ui/Button'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
+import EmptyState from '../components/ui/EmptyState'
+import FoodCard from '../features/foods/FoodCard'
 import toast from 'react-hot-toast'
 
 export default function FoodDetailPage() {
@@ -15,7 +17,7 @@ export default function FoodDetailPage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
-  const { currentFood, loading } = useSelector((state) => state.foods)
+  const { currentFood, loading, error, foods } = useSelector((state) => state.foods)
   const { isAuthenticated } = useSelector((state) => state.auth)
   const cartItems = useSelector(selectCartItems)
 
@@ -23,9 +25,23 @@ export default function FoodDetailPage() {
   const [selectedVariant, setSelectedVariant] = useState(null)
   const [selectedToppings, setSelectedToppings] = useState([])
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [showStickyCta, setShowStickyCta] = useState(false)
+  const addToCartRef = useRef(null)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (addToCartRef.current) {
+        const rect = addToCartRef.current.getBoundingClientRect()
+        setShowStickyCta(rect.bottom < 0)
+      }
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   useEffect(() => {
     dispatch(fetchFoodById(id))
+    dispatch(fetchFoods({ limit: 20 }))
     return () => dispatch(clearCurrentFood())
   }, [id, dispatch])
 
@@ -35,13 +51,40 @@ export default function FoodDetailPage() {
     }
   }, [currentFood])
 
-  if (loading || !currentFood) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream">
         <LoadingSpinner size="lg" />
       </div>
     )
   }
+
+  if (error && !currentFood) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <EmptyState
+          icon={AlertCircle}
+          title="Không tìm thấy món ăn"
+          description={error || 'Món ăn này không tồn tại hoặc đã bị xóa.'}
+          actionLabel="Quay lại thực đơn"
+          onAction={() => navigate('/')}
+        />
+      </div>
+    )
+  }
+
+  if (!currentFood) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cream">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  // Related foods: same category, exclude current
+  const relatedFoods = (foods || [])
+    .filter((f) => f._id !== currentFood._id && (f.category === currentFood.category || f.categoryName === currentFood.categoryName))
+    .slice(0, 4)
 
   const variantPrice = selectedVariant?.price || 0
   const toppingsPrice = selectedToppings.reduce((sum, t) => sum + (t.price || 0), 0)
@@ -89,7 +132,7 @@ export default function FoodDetailPage() {
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + resolvedImages.length) % resolvedImages.length)
 
   return (
-    <div className="min-h-screen bg-cream py-8">
+    <div className="min-h-screen bg-cream py-8 pb-28">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Gallery */}
@@ -273,7 +316,7 @@ export default function FoodDetailPage() {
             )}
 
             {/* Quantity + Add to cart */}
-            <div className="bg-white rounded-xl p-4 shadow-sm space-y-4">
+            <div ref={addToCartRef} className="bg-white rounded-xl p-4 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-charcoal-900">Số lượng</span>
                 <div className="flex items-center border-2 border-charcoal-200 rounded-xl overflow-hidden">
@@ -312,7 +355,51 @@ export default function FoodDetailPage() {
             </div>
           </motion.div>
         </div>
+
+        {/* Related Foods */}
+        {relatedFoods.length > 0 && (
+          <div className="mt-8 pt-8 border-t border-charcoal-100">
+            <div className="flex items-center gap-2 mb-4">
+              <Grid3x3 className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-bold text-charcoal-900 font-heading">Món liên quan</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {relatedFoods.map((food) => (
+                <FoodCard key={food._id} food={food} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Sticky mobile CTA */}
+      <AnimatePresence>
+        {showStickyCta && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-charcoal-100 px-4 py-3 z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 text-right">
+                <p className="text-xs text-charcoal-500">Tổng cộng</p>
+                <p className="text-lg font-bold text-secondary font-heading">
+                  {formatCurrency(totalPrice)}
+                </p>
+              </div>
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 bg-primary text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 shadow-sm hover:bg-primary-dark transition-colors"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Thêm vào giỏ hàng
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

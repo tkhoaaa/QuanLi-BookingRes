@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Outlet } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
@@ -22,6 +22,7 @@ import { clearWishlist } from '../slices/wishlistSlice'
 import { fetchWishlist } from '../slices/wishlistSlice'
 import { selectCartCount } from '../slices/cartSlice'
 import { selectUnreadCount } from '../slices/notificationsSlice'
+import CartSidebar from '../components/ui/CartSidebar'
 
 export default function MainLayout() {
   const dispatch = useDispatch()
@@ -35,6 +36,8 @@ export default function MainLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [cartSidebarOpen, setCartSidebarOpen] = useState(false)
+  const searchTimeoutRef = useRef(null)
 
   // Fetch wishlist once when user is authenticated
   useEffect(() => {
@@ -48,14 +51,6 @@ export default function MainLayout() {
     dispatch(clearWishlist())
     setUserMenuOpen(false)
     navigate('/')
-  }
-
-  const handleSearch = (e) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchQuery('')
-    }
   }
 
   const navLinks = [
@@ -108,20 +103,39 @@ export default function MainLayout() {
             {/* Right side */}
             <div className="flex items-center gap-1">
               {/* Search */}
-              <form onSubmit={handleSearch} className="hidden lg:block relative">
+              <div className="hidden lg:block relative">
                 <input
                   type="text"
                   placeholder="Tìm kiếm món ăn..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-4 py-2 text-sm border border-charcoal-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-56 bg-charcoal-50/50"
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+                    if (e.target.value.trim()) {
+                      searchTimeoutRef.current = setTimeout(() => {
+                        navigate(`/?search=${encodeURIComponent(e.target.value.trim())}`)
+                      }, 300)
+                    }
+                  }}
+                  className="pl-9 pr-8 py-2 text-sm border border-charcoal-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-56 bg-charcoal-50/50"
                 />
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
-              </form>
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('')
+                      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-400 hover:text-charcoal-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
 
               {/* Cart */}
-              <Link
-                to="/cart"
+              <button
+                onClick={() => setCartSidebarOpen(true)}
                 className="relative p-2 text-charcoal-600 hover:text-primary transition-colors"
               >
                 <ShoppingCart className="w-5 h-5" />
@@ -130,7 +144,7 @@ export default function MainLayout() {
                     {cartCount > 9 ? '9+' : cartCount}
                   </span>
                 )}
-              </Link>
+              </button>
 
               {/* Wishlist */}
               {isAuthenticated && (
@@ -271,16 +285,36 @@ export default function MainLayout() {
               className="md:hidden border-t border-charcoal-100 overflow-hidden bg-white"
             >
               <div className="px-4 py-4 space-y-1">
-                <form onSubmit={handleSearch} className="relative mb-3">
+                <div className="relative mb-3">
                   <input
                     type="text"
                     placeholder="Tìm kiếm món ăn..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 text-sm border border-charcoal-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value)
+                      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+                      if (e.target.value.trim()) {
+                        searchTimeoutRef.current = setTimeout(() => {
+                          navigate(`/?search=${encodeURIComponent(e.target.value.trim())}`)
+                          setMobileMenuOpen(false)
+                        }, 300)
+                      }
+                    }}
+                    className="w-full pl-9 pr-10 py-2.5 text-sm border border-charcoal-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-charcoal-400" />
-                </form>
+                  {searchQuery && (
+                    <button
+                      onClick={() => {
+                        setSearchQuery('')
+                        if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-400 hover:text-charcoal-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
                 {allNavLinks.map((link) => (
                   <Link
                     key={link.to}
@@ -320,6 +354,20 @@ export default function MainLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
+
+      {/* Cart Sidebar */}
+      <CartSidebar isOpen={cartSidebarOpen} onClose={() => setCartSidebarOpen(false)} />
+
+      {/* Cart link hint (shown when sidebar is open or always on mobile) */}
+      <div className="fixed bottom-4 right-4 z-40 md:hidden">
+        <Link
+          to="/cart"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-charcoal-700/90 backdrop-blur-sm text-white text-xs rounded-full shadow-lg hover:bg-charcoal-600 transition-colors"
+        >
+          <ShoppingCart className="w-3.5 h-3.5" />
+          Xem giỏ hàng
+        </Link>
+      </div>
 
       {/* Footer */}
       <footer className="bg-charcoal-900 text-charcoal-300 py-12 mt-auto">

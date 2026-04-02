@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Package, ChevronRight, Sparkles, Clock, MapPin } from 'lucide-react'
+import { Package, ChevronRight, Sparkles, Clock, MapPin, RefreshCw } from 'lucide-react'
 import { fetchMyOrders } from '../slices/ordersSlice'
 import StatusBadge from '../components/ui/StatusBadge'
 import Pagination from '../components/ui/Pagination'
 import EmptyState from '../components/ui/EmptyState'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
+import { SkeletonRow } from '../components/ui/Skeleton'
+import Button from '../components/ui/Button'
 import { formatCurrency, formatDate } from '../lib/utils'
 
 export default function OrderHistoryPage() {
   const dispatch = useDispatch()
-  const { orders, loading, pagination } = useSelector((state) => state.orders)
+  const { orders, loading, error, pagination } = useSelector((state) => state.orders)
   const [page, setPage] = useState(1)
 
   useEffect(() => {
@@ -33,11 +35,38 @@ export default function OrderHistoryPage() {
           </div>
         </div>
 
-        {loading && orders.length === 0 ? (
-          <div className="flex justify-center py-20">
-            <LoadingSpinner />
+        {/* Error State */}
+        {error && orders.length === 0 && (
+          <EmptyState
+            icon={Package}
+            title="Không thể tải đơn hàng"
+            description={error || 'Đã xảy ra lỗi khi tải danh sách đơn hàng. Vui lòng thử lại.'}
+            actionLabel="Thử lại"
+            onAction={() => dispatch(fetchMyOrders({ page, limit: 10 }))}
+          />
+        )}
+
+        {/* Loading Skeleton */}
+        {loading && orders.length === 0 && !error && (
+          <div className="bg-white rounded-2xl shadow-card p-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 py-4 border-b border-charcoal-100 last:border-0">
+                <div className="w-20 h-10 bg-gray-200 rounded animate-pulse" />
+                <div className="w-px h-8 bg-gray-200" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-gray-200 rounded animate-pulse w-32" />
+                  <div className="h-3 bg-gray-200 rounded animate-pulse w-20" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-6 w-16 bg-gray-200 rounded-full animate-pulse" />
+                  <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
           </div>
-        ) : orders.length === 0 ? (
+        )}
+
+        {!loading && orders.length === 0 && !error && (
           <EmptyState
             icon={Package}
             title="Chưa có đơn hàng nào"
@@ -45,7 +74,9 @@ export default function OrderHistoryPage() {
             actionLabel="Khám phá thực đơn"
             onAction={() => window.location.href = '/'}
           />
-        ) : (
+        )}
+
+        {orders.length > 0 && (
           <div className="space-y-3">
             <AnimatePresence>
               {orders.map((order, index) => (

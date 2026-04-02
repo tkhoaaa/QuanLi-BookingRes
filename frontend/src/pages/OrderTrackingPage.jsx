@@ -13,6 +13,10 @@ import {
   MapPin,
   Phone,
   Sparkles,
+  User,
+  Navigation,
+  CreditCard,
+  AlertCircle,
 } from 'lucide-react'
 import { fetchOrderDetail, cancelOrder } from '../slices/ordersSlice'
 import { socket } from '../lib/socket'
@@ -231,6 +235,99 @@ export default function OrderTrackingPage() {
             </div>
           </div>
         )}
+
+        {/* Shipper Info Card */}
+        {currentOrder.shipper && currentOrder.fulfillmentType === 'delivery' && (
+          <div className="bg-white rounded-2xl p-5 shadow-card mb-4">
+            <h2 className="font-semibold text-charcoal-900 mb-3 font-heading">Thông tin shipper</h2>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                <User className="w-7 h-7 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-charcoal-900">{currentOrder.shipper.name || 'Shipper'}</p>
+                <p className="text-sm text-charcoal-500 flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5" />
+                  <a href={`tel:${currentOrder.shipper.phone}`} className="text-primary hover:underline">
+                    {currentOrder.shipper.phone || 'N/A'}
+                  </a>
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <a
+                  href={`tel:${currentOrder.shipper.phone}`}
+                  className="w-10 h-10 bg-green-50 hover:bg-green-100 rounded-xl flex items-center justify-center transition-colors"
+                  title="Gọi shipper"
+                >
+                  <Phone className="w-4 h-4 text-green-600" />
+                </a>
+                {currentOrder.shippingAddress?.address && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentOrder.shippingAddress.address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 bg-blue-50 hover:bg-blue-100 rounded-xl flex items-center justify-center transition-colors"
+                    title="Chỉ đường"
+                  >
+                    <Navigation className="w-4 h-4 text-blue-600" />
+                  </a>
+                )}
+              </div>
+            </div>
+            {currentOrder.status === ORDER_STATUS.DELIVERING && (
+              <div className="mt-4 flex items-center gap-3 bg-cyan-50 rounded-xl p-3">
+                <Truck className="w-5 h-5 text-cyan-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-cyan-700">Dự kiến giao: 15-25 phút</p>
+                  <p className="text-xs text-cyan-500">Shipper đang trên đường giao đến bạn</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Map Placeholder during delivery */}
+        {currentOrder.fulfillmentType === 'delivery' && currentOrder.status === ORDER_STATUS.DELIVERING && (
+          <div className="bg-white rounded-2xl p-3 shadow-card mb-4 overflow-hidden">
+            <div className="w-full h-32 bg-charcoal-100 rounded-xl flex items-center justify-center">
+              <div className="text-center">
+                <MapPin className="w-8 h-8 text-charcoal-300 mx-auto mb-1" />
+                <p className="text-xs text-charcoal-400">Bản đồ theo dõi giao hàng</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Status */}
+        <div className="bg-white rounded-2xl p-5 shadow-card mb-4">
+          <h2 className="font-semibold text-charcoal-900 mb-3 font-heading">Thanh toán</h2>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-charcoal-400" />
+                <span className="text-sm text-charcoal-600">Phương thức</span>
+              </div>
+              <span className="text-sm font-semibold text-charcoal-900">
+                {currentOrder.paymentMethod === 'COD' ? 'COD (Tiền mặt)' :
+                  currentOrder.paymentMethod === 'VNPay' ? 'VNPay' :
+                    currentOrder.paymentMethod === 'MoMo' ? 'MoMo' : 'COD'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {currentOrder.isPaid ? (
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                )}
+                <span className="text-sm text-charcoal-600">Trạng thái</span>
+              </div>
+              <span className={`text-sm font-semibold ${currentOrder.isPaid ? 'text-green-600' : 'text-amber-600'}`}>
+                {currentOrder.isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+              </span>
+            </div>
+          </div>
+        </div>
 
         {/* Actions */}
         {currentOrder.status === ORDER_STATUS.PENDING && user?.role === 'customer' && (

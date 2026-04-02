@@ -1,19 +1,39 @@
+import { useState, useEffect, useRef } from 'react'
+import { useDispatch } from 'react-redux'
 import { Search, LayoutGrid, List, X } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { CATEGORIES } from '../../constants'
+import { setFilters } from '../../slices/foodsSlice'
 
 export default function SearchFilterBar({
-  search,
+  search = '',
   onSearchChange,
-  category,
+  category = '',
   onCategoryChange,
-  sort,
+  sort = 'createdAt-desc',
   onSortChange,
-  viewMode,
+  viewMode = 'grid',
   onViewModeChange,
-  total,
+  total = 0,
   className,
 }) {
+  const dispatch = useDispatch()
+  const [localSearch, setLocalSearch] = useState(search)
+  const searchTimeoutRef = useRef(null)
+
+  // Sync local search with prop
+  useEffect(() => {
+    setLocalSearch(search)
+  }, [search])
+
+  const handleSearchChange = (value) => {
+    setLocalSearch(value)
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+    searchTimeoutRef.current = setTimeout(() => {
+      if (onSearchChange) onSearchChange(value)
+    }, 300)
+  }
+
   const sortOptions = [
     { value: 'createdAt-desc', label: 'Mới nhất' },
     { value: 'createdAt-asc', label: 'Cũ nhất' },
@@ -22,6 +42,7 @@ export default function SearchFilterBar({
     { value: 'name-asc', label: 'Tên A-Z' },
     { value: 'name-desc', label: 'Tên Z-A' },
     { value: 'rating-desc', label: 'Đánh giá cao nhất' },
+    { value: 'soldCount-desc', label: 'Bán chạy nhất' },
   ]
 
   return (
@@ -33,13 +54,16 @@ export default function SearchFilterBar({
           <input
             type="text"
             placeholder="Tìm kiếm món ăn..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
+            value={localSearch}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-10 pr-8 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
-          {search && (
+          {localSearch && (
             <button
-              onClick={() => onSearchChange('')}
+              onClick={() => {
+                handleSearchChange('')
+                if (onSearchChange) onSearchChange('')
+              }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X className="w-4 h-4" />
@@ -50,7 +74,7 @@ export default function SearchFilterBar({
         {/* Category */}
         <select
           value={category}
-          onChange={(e) => onCategoryChange(e.target.value)}
+          onChange={(e) => onCategoryChange && onCategoryChange(e.target.value)}
           className="px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-w-[160px]"
         >
           <option value="">Tất cả danh mục</option>
@@ -64,7 +88,7 @@ export default function SearchFilterBar({
         {/* Sort */}
         <select
           value={sort}
-          onChange={(e) => onSortChange(e.target.value)}
+          onChange={(e) => onSortChange && onSortChange(e.target.value)}
           className="px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-w-[160px]"
         >
           {sortOptions.map((opt) => (
@@ -77,7 +101,7 @@ export default function SearchFilterBar({
         {/* View toggle */}
         <div className="flex border border-gray-200 rounded-lg overflow-hidden">
           <button
-            onClick={() => onViewModeChange('grid')}
+            onClick={() => onViewModeChange && onViewModeChange('grid')}
             className={cn(
               'p-2.5 transition-colors',
               viewMode === 'grid' ? 'bg-primary text-white' : 'text-gray-400 hover:bg-gray-50'
@@ -86,7 +110,7 @@ export default function SearchFilterBar({
             <LayoutGrid className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onViewModeChange('list')}
+            onClick={() => onViewModeChange && onViewModeChange('list')}
             className={cn(
               'p-2.5 transition-colors',
               viewMode === 'list' ? 'bg-primary text-white' : 'text-gray-400 hover:bg-gray-50'
@@ -102,11 +126,12 @@ export default function SearchFilterBar({
         <p className="text-sm text-gray-500">
           Tìm thấy <span className="font-medium text-gray-900">{total}</span> món ăn
         </p>
-        {(search || category) && (
+        {(localSearch || category) && (
           <button
             onClick={() => {
-              onSearchChange('')
-              onCategoryChange('')
+              setLocalSearch('')
+              if (onSearchChange) onSearchChange('')
+              if (onCategoryChange) onCategoryChange('')
             }}
             className="text-xs text-primary hover:text-primary-dark"
           >

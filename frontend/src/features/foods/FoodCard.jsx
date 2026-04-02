@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Star, ShoppingCart, Heart } from 'lucide-react'
+import { Star, ShoppingCart, Heart, Plus, Minus } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { addItem } from '../../slices/cartSlice'
 import { addToWishlist, removeFromWishlist } from '../../slices/wishlistSlice'
@@ -11,8 +12,23 @@ export default function FoodCard({ food, className }) {
   const dispatch = useDispatch()
   const { isAuthenticated } = useSelector((state) => state.auth)
   const wishlistIds = useSelector((state) => state.wishlist.ids)
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
+  const [quickQty, setQuickQty] = useState(1)
 
   const isWishlisted = wishlistIds.includes(food._id)
+
+  const handleQuickAdd = (e, qty) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để thêm món vào giỏ hàng')
+      return
+    }
+    dispatch(addItem({ food, quantity: qty, variant: null, toppings: [] }))
+    toast.success(`Đã thêm ${qty}x ${food.name} vào giỏ hàng`)
+    setShowQuickAdd(false)
+    setQuickQty(1)
+  }
 
   const handleAddToCart = (e) => {
     e.preventDefault()
@@ -84,6 +100,44 @@ export default function FoodCard({ food, className }) {
           >
             <Heart className={cn('w-4 h-4', isWishlisted && 'fill-current')} />
           </button>
+
+          {/* Quick-add overlay on hover */}
+          <div
+            className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center"
+            onMouseEnter={() => setShowQuickAdd(true)}
+            onMouseLeave={() => { setShowQuickAdd(false); setQuickQty(1) }}
+          >
+            {showQuickAdd ? (
+              <div className="flex items-center gap-1 bg-white rounded-full p-1 shadow-lg">
+                <button
+                  onClick={(e) => setQuickQty(Math.max(1, quickQty - 1))}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <span className="w-6 text-center text-sm font-semibold">{quickQty}</span>
+                <button
+                  onClick={(e) => setQuickQty(quickQty + 1)}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={(e) => handleQuickAdd(e, quickQty)}
+                  className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center hover:bg-primary-dark transition-colors ml-1"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleAddToCart}
+                className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:bg-primary-dark transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Content */}
