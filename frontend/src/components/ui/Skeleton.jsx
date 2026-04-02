@@ -1,6 +1,6 @@
 import { cn } from '../../lib/utils'
 
-export function Skeleton({ className, ...props }) {
+const Skeleton = ({ className, ...props }) => {
   return (
     <div
       className={cn('animate-pulse bg-gray-200 rounded', className)}
@@ -8,6 +8,8 @@ export function Skeleton({ className, ...props }) {
     />
   )
 }
+
+export default Skeleton
 
 export function SkeletonCard() {
   return (

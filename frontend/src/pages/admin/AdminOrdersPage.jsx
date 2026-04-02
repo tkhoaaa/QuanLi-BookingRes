@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
-import { Search, Eye, UserPlus, Truck } from 'lucide-react'
+import { Search, Eye, UserPlus, Truck, ChevronUp, ChevronDown, ShoppingBag } from 'lucide-react'
 import { fetchAllOrders, updateOrderStatus, assignShipper } from '../../slices/ordersSlice'
-import { ORDER_STATUS } from '../../constants'
+import { ORDER_STATUS, ORDER_STATUS_TRANSITIONS, ORDER_STATUS_COLORS } from '../../constants'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Button from '../../components/ui/Button'
 import Pagination from '../../components/ui/Pagination'
@@ -13,6 +13,14 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import { formatCurrency, formatDate } from '../../lib/utils'
 import toast from 'react-hot-toast'
 import axiosClient from '../../api/axiosClient'
+
+const FILTER_CHIPS = [
+  { key: '', label: 'Tất cả' },
+  { key: 'pending', label: 'Chưa xác nhận' },
+  { key: 'delivering', label: 'Đang giao' },
+  { key: 'delivered', label: 'Hoàn thành' },
+  { key: 'cancelled', label: 'Đã hủy' },
+]
 
 export default function AdminOrdersPage() {
   const dispatch = useDispatch()
@@ -28,6 +36,9 @@ export default function AdminOrdersPage() {
   const [assignShipperId, setAssignShipperId] = useState(null)
   const [selectedShipper, setSelectedShipper] = useState('')
   const [loadingAssign, setLoadingAssign] = useState(false)
+  const [sortField, setSortField] = useState('createdAt')
+  const [sortDir, setSortDir] = useState('desc')
+  const [warnStatusSkip, setWarnStatusSkip] = useState(null)
 
   useEffect(() => {
     axiosClient.get('/admin/users?role=shipper&limit=100').then(res => {
@@ -36,10 +47,36 @@ export default function AdminOrdersPage() {
   }, [])
 
   useEffect(() => {
-    dispatch(fetchAllOrders({ page, limit: 20, status: statusFilter, search }))
-  }, [page, statusFilter, search, dispatch])
+    dispatch(fetchAllOrders({ page, limit: 20, status: statusFilter, search, sortField, sortDir }))
+  }, [page, statusFilter, search, sortField, sortDir, dispatch])
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDir('asc')
+    }
+  }
+
+  const SortIcon = ({ field }) => {
+    if (sortField !== field) return <ChevronUp className="w-3 h-3 opacity-0 group-hover:opacity-30" />
+    return sortDir === 'asc'
+      ? <ChevronUp className="w-3 h-3 text-primary" />
+      : <ChevronDown className="w-3 h-3 text-primary" />
+  }
 
   const handleUpdateStatus = (orderId, status) => {
+    const order = orders.find(o => o._id === orderId)
+    if (order) {
+      const validNext = ORDER_STATUS_TRANSITIONS[order.status] || []
+      const currentIdx = ['pending','confirmed','preparing','picking','delivering','delivered','cancelled'].indexOf(order.status)
+      const nextIdx = ['pending','confirmed','preparing','picking','delivering','delivered','cancelled'].indexOf(status)
+      if (validNext.length > 0 && nextIdx - currentIdx > 1) {
+        setWarnStatusSkip(orderId)
+        return
+      }
+    }
     setUpdateStatusId(orderId)
     setNewStatus(status)
   }
@@ -51,6 +88,7 @@ export default function AdminOrdersPage() {
       await dispatch(updateOrderStatus({ id: updateStatusId, status: newStatus })).unwrap()
       toast.success('Cập nhật trạng thái thành công')
       setUpdateStatusId(null)
+      setWarnStatusSkip(null)
     } catch (error) {
       toast.error(error || 'Cập nhật thất bại')
     } finally {
@@ -80,44 +118,61 @@ export default function AdminOrdersPage() {
 
   const statusOptions = [
     { value: '', label: 'Tất cả' },
-    { value: ORDER_STATUS.PENDING, label: 'Chờ xử lý' },
-    { value: ORDER_STATUS.CONFIRMED, label: 'Đã xác nhận' },
-    { value: ORDER_STATUS.PREPARING, label: 'Đang chuẩn bị' },
-    { value: ORDER_STATUS.PICKING, label: 'Đang lấy hàng' },
-    { value: ORDER_STATUS.DELIVERING, label: 'Đang giao' },
-    { value: ORDER_STATUS.DELIVERED, label: 'Đã giao' },
-    { value: ORDER_STATUS.CANCELLED, label: 'Đã hủy' },
+    { value: 'pending', label: 'Chờ xử lý' },
+    { value: 'confirmed', label: 'Đã xác nhận' },
+    { value: 'preparing', label: 'Đang chuẩn bị' },
+    { value: 'picking', label: 'Đang lấy hàng' },
+    { value: 'delivering', label: 'Đang giao' },
+    { value: 'delivered', label: 'Đã giao' },
+    { value: 'cancelled', label: 'Đã hủy' },
   ]
+
+  const statusLabels = Object.fromEntries(
+    Object.entries(ORDER_STATUS_COLORS).map(([k, v]) => [k, v.label])
+  )
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
-        <p className="text-gray-500 text-sm mt-1">{orders.length} đơn hàng</p>
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <ShoppingBag className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
+            <p className="text-gray-500 text-sm">{pagination.total || 0} đơn hàng trong hệ thống</p>
+          </div>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Tìm đơn hàng..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-          />
-        </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-        >
-          {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+      {/* Filter chips */}
+      <div className="flex flex-wrap gap-2">
+        {FILTER_CHIPS.map(chip => (
+          <button
+            key={chip.key}
+            onClick={() => { setStatusFilter(chip.key); setPage(1) }}
+            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+              statusFilter === chip.key
+                ? 'bg-primary text-white shadow-sm'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Tìm đơn hàng (mã đơn, tên khách, số điện thoại)..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+          className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+        />
       </div>
 
       {/* Table */}
@@ -133,83 +188,113 @@ export default function AdminOrdersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-500 bg-gray-50 border-b">
-                  <th className="px-4 py-3 font-medium">Mã đơn</th>
+                  <th className="px-4 py-3 font-medium group cursor-pointer select-none" onClick={() => handleSort('_id')}>
+                    <div className="flex items-center gap-1">
+                      Mã đơn <SortIcon field="_id" />
+                    </div>
+                  </th>
                   <th className="px-4 py-3 font-medium">Khách hàng</th>
-                  <th className="px-4 py-3 font-medium">Tổng tiền</th>
+                  <th className="px-4 py-3 font-medium group cursor-pointer select-none" onClick={() => handleSort('total')}>
+                    <div className="flex items-center gap-1">
+                      Tổng tiền <SortIcon field="total" />
+                    </div>
+                  </th>
                   <th className="px-4 py-3 font-medium">Shipper</th>
-                  <th className="px-4 py-3 font-medium">Trạng thái</th>
-                  <th className="px-4 py-3 font-medium">Ngày đặt</th>
-                  <th className="px-4 py-3 font-medium">Hành động</th>
+                  <th className="px-4 py-3 font-medium group cursor-pointer select-none" onClick={() => handleSort('status')}>
+                    <div className="flex items-center gap-1">
+                      Trạng thái <SortIcon field="status" />
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 font-medium group cursor-pointer select-none" onClick={() => handleSort('createdAt')}>
+                    <div className="flex items-center gap-1">
+                      Ngày đặt <SortIcon field="createdAt" />
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 font-medium">Chi tiết</th>
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => (
-                  <motion.tr
-                    key={order._id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      #{order._id?.slice(-8).toUpperCase()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{order.shippingAddress?.name || order.user?.name || 'Khách'}</p>
-                      <p className="text-xs text-gray-500">{order.shippingAddress?.phone || order.user?.phone || '-'}</p>
-                    </td>
-                    <td className="px-4 py-3 text-primary font-medium">{formatCurrency(order.total)}</td>
-                    <td className="px-4 py-3">
-                      {order.shipper ? (
-                        <div className="flex items-center gap-1">
-                          <Truck className="w-3.5 h-3.5 text-green-600" />
-                          <span className="text-xs text-green-700 font-medium">{order.shipper.name}</span>
-                        </div>
-                      ) : order.fulfillmentType === 'pickup' ? (
-                        <span className="text-xs text-gray-400 italic">Tự lấy</span>
-                      ) : (
-                        <button
-                          onClick={() => handleAssignShipper(order._id)}
-                          className="text-xs px-2 py-1 bg-amber-50 text-amber-700 rounded-full hover:bg-amber-100 transition-colors"
+                {orders.map((order) => {
+                  const validNext = ORDER_STATUS_TRANSITIONS[order.status] || []
+                  const isSkipping = warnStatusSkip === order._id
+                  return (
+                    <motion.tr
+                      key={order._id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${isSkipping ? 'bg-amber-50' : ''}`}
+                    >
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        #{order._id?.slice(-8).toUpperCase()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-gray-900">{order.shippingAddress?.name || order.user?.name || 'Khách'}</p>
+                        <p className="text-xs text-gray-500">{order.shippingAddress?.phone || order.user?.phone || '-'}</p>
+                      </td>
+                      <td className="px-4 py-3 text-primary font-medium">{formatCurrency(order.total)}</td>
+                      <td className="px-4 py-3">
+                        {order.shipper ? (
+                          <div className="flex items-center gap-1">
+                            <Truck className="w-3.5 h-3.5 text-green-600" />
+                            <span className="text-xs text-green-700 font-medium">{order.shipper.name}</span>
+                          </div>
+                        ) : order.fulfillmentType === 'pickup' ? (
+                          <span className="text-xs text-gray-400 italic">Tự lấy</span>
+                        ) : (
+                          <button
+                            onClick={() => handleAssignShipper(order._id)}
+                            className="text-xs px-2 py-1 bg-amber-50 text-amber-700 rounded-full hover:bg-amber-100 transition-colors"
+                          >
+                            + Gán shipper
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {isSkipping ? (
+                          <div className="space-y-1">
+                            <StatusBadge status={order.status} />
+                            <p className="text-xs text-amber-600">Không thể bỏ qua bước trung gian</p>
+                            <button
+                              onClick={() => setWarnStatusSkip(null)}
+                              className="text-xs text-gray-400 underline"
+                            >
+                              Đóng
+                            </button>
+                          </div>
+                        ) : validNext.length === 0 ? (
+                          <StatusBadge status={order.status} />
+                        ) : (
+                          <select
+                            value={order.status}
+                            onChange={(e) => handleUpdateStatus(order._id, e.target.value)}
+                            className="text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer bg-white ring-1 ring-gray-200 hover:ring-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          >
+                            <option value={order.status}>{ORDER_STATUS_COLORS[order.status]?.label || order.status}</option>
+                            {validNext.map(s => (
+                              <option key={s} value={s}>{ORDER_STATUS_COLORS[s]?.label || s}</option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">{formatDate(order.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        <Link
+                          to={`/admin/orders/${order._id}`}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg inline-block transition-colors"
                         >
-                          + Gán shipper
-                        </button>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <select
-                        value={order.status}
-                        onChange={(e) => handleUpdateStatus(order._id, e.target.value)}
-                        className={`text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer ${
-                          order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                          order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                          order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                          order.status === 'delivering' ? 'bg-cyan-100 text-cyan-700' :
-                          'bg-blue-100 text-blue-700'
-                        }`}
-                      >
-                        {statusOptions.filter(o => o.value).map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate(order.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      <Link
-                        to={`/admin/orders/${order._id}`}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg inline-block transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Link>
-                    </td>
-                  </motion.tr>
-                ))}
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                      </td>
+                    </motion.tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {orders.length > 0 && (
+      {pagination.total > 0 && (
         <Pagination
           currentPage={page}
           totalPages={Math.ceil((pagination.total || 0) / 20) || 1}

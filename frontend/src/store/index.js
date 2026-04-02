@@ -6,6 +6,7 @@ import ordersReducer from '../slices/ordersSlice'
 import notificationsReducer from '../slices/notificationsSlice'
 import bookingsReducer from '../slices/bookingsSlice'
 import wishlistReducer from '../slices/wishlistSlice'
+import auditReducer from '../slices/auditSlice'
 
 export const store = configureStore({
   reducer: {
@@ -16,5 +17,6 @@ export const store = configureStore({
     notifications: notificationsReducer,
     bookings: bookingsReducer,
     wishlist: wishlistReducer,
+    audit: auditReducer,
   },
 })

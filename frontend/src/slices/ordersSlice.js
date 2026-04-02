@@ -88,6 +88,8 @@ export const fetchAllOrders = createAsyncThunk(
       if (params.limit) query.append('limit', params.limit)
       if (params.status) query.append('status', params.status)
       if (params.search) query.append('search', params.search)
+      if (params.sortField) query.append('sortField', params.sortField)
+      if (params.sortDir) query.append('sortDir', params.sortDir)
 
       const res = await axiosClient.get(`/admin/orders?${query.toString()}`)
       return res.data.data

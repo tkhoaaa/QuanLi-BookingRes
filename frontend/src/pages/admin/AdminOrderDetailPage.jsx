@@ -14,7 +14,7 @@ import {
   CreditCard,
 } from 'lucide-react'
 import { fetchOrderDetail, updateOrderStatus } from '../../slices/ordersSlice'
-import { ORDER_STATUS_COLORS } from '../../constants'
+import { ORDER_STATUS_COLORS, ORDER_STATUS_TRANSITIONS } from '../../constants'
 import StatusBadge from '../../components/ui/StatusBadge'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import { formatCurrency, formatDate } from '../../lib/utils'
@@ -202,7 +202,8 @@ export default function AdminOrderDetailPage() {
                   onChange={(e) => handleStatusUpdate(e.target.value)}
                   className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 >
-                  {statusOrder.map((s) => (
+                  <option value={order.status}>{ORDER_STATUS_COLORS[order.status]?.label || order.status}</option>
+                  {(ORDER_STATUS_TRANSITIONS[order.status] || []).map((s) => (
                     <option key={s} value={s}>
                       {ORDER_STATUS_COLORS[s]?.label || s}
                     </option>

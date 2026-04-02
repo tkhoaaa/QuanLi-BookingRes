@@ -28,6 +28,8 @@ import AdminOrderDetailPage from '../pages/admin/AdminOrderDetailPage'
 import AdminUsersPage from '../pages/admin/AdminUsersPage'
 import AdminPromosPage from '../pages/admin/AdminPromosPage'
 import AdminBranchesPage from '../pages/admin/AdminBranchesPage'
+import AdminAuditLogPage from '../pages/admin/AdminAuditLogPage'
+import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage'
 
 // Shipper pages
 import ShipperDashboardPage from '../pages/shipper/ShipperDashboardPage'
@@ -87,6 +89,8 @@ export default function AppRoutes() {
         <Route path="users" element={<AdminUsersPage />} />
         <Route path="promos" element={<AdminPromosPage />} />
         <Route path="branches" element={<AdminBranchesPage />} />
+        <Route path="audit-logs" element={<AdminAuditLogPage />} />
+        <Route path="categories" element={<AdminCategoriesPage />} />
       </Route>
 
       {/* ── Shipper layout ────────────────────────────────── */}
