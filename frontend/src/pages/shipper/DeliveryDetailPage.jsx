@@ -19,7 +19,8 @@ import { socket } from '../../lib/socket'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Button from '../../components/ui/Button'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
-import { formatCurrency, formatDateTime } from '../../lib/utils'
+import { formatCurrency, formatDateTime, cn } from '../../lib/utils'
+import axiosClient from '../../api/axiosClient'
 import toast from 'react-hot-toast'
 
 export default function DeliveryDetailPage() {
@@ -31,17 +32,32 @@ export default function DeliveryDetailPage() {
 
   const [actionLoading, setActionLoading] = useState(false)
   const [myLocation, setMyLocation] = useState(null)
+  const [locationUpdated, setLocationUpdated] = useState(false)
 
-  // GPS location helper
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => toast.error('Khong the lay vi tri hien tai')
-      )
-    } else {
+  // GPS location helper — gets position and sends to backend API
+  const getCurrentLocation = async () => {
+    if (!navigator.geolocation) {
       toast.error('Trinh duyet khong ho tro dinh vi')
+      return
     }
+    setLocationUpdated(false)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        setMyLocation(coords)
+        // Send location to backend
+        try {
+          await axiosClient.post(`/delivery/${id}/location`, coords)
+          setLocationUpdated(true)
+          toast.success('Da cap nhat vi tri')
+          setTimeout(() => setLocationUpdated(false), 3000)
+        } catch (err) {
+          toast.error('Khong the gui vi tri len server')
+          console.error(err)
+        }
+      },
+      () => toast.error('Khong the lay vi tri hien tai')
+    )
   }
 
   useEffect(() => {
@@ -165,10 +181,17 @@ export default function DeliveryDetailPage() {
             )}
             <button
               onClick={getCurrentLocation}
-              className="flex items-center gap-1 px-3 py-1.5 bg-primary text-white text-xs rounded-lg hover:bg-primary-dark transition-colors"
+              className={cn(
+                'flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg transition-colors',
+                locationUpdated
+                  ? 'bg-green-500 text-white'
+                  : 'bg-primary text-white hover:bg-primary-dark'
+              )}
             >
               <Navigation className="w-3 h-3" />
-              <span className="hidden sm:inline">Cap nhat</span>
+              <span className="hidden sm:inline">
+                {locationUpdated ? 'Da cap nhat' : 'Cap nhat vi tri'}
+              </span>
             </button>
           </div>
         </div>

@@ -67,8 +67,14 @@ const bookingSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ["unpaid", "paid", "refunded"],
+      enum: ["unpaid", "paid", "refunded", "failed"],
       default: "unpaid",
+    },
+    transactionId: {
+      type: String,
+    },
+    paidAt: {
+      type: Date,
     },
     fulfillmentType: {
       type: String,
@@ -90,6 +96,13 @@ const bookingSchema = new mongoose.Schema(
     },
     note: String,
     estimatedDelivery: Date,
+    deliveryLocation: {
+      lat: Number,
+      lng: Number,
+    },
+    estimatedDeliveryTime: Date,
+    actualPickupTime: Date,
+    actualDeliveryTime: Date,
     shipper: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

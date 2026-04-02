@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { CheckCircle, MapPin, Package, ArrowRight, Clock, Share2, Facebook, MessageCircle } from 'lucide-react'
 import { useSelector } from 'react-redux'
-import { formatCurrency } from '../lib/utils'
+import { formatCurrency, cn } from '../lib/utils'
 import Button from '../components/ui/Button'
 
 // Confetti particle colors
@@ -172,6 +172,23 @@ export default function OrderSuccessPage() {
                     {formatCurrency(currentOrder.total)}
                   </span>
                 </div>
+
+                {/* Payment status badge */}
+                {(currentOrder.paymentMethod === 'COD' || currentOrder.paymentStatus === 'paid') && (
+                  <div className={cn(
+                    'flex items-center gap-2 rounded-xl px-3 py-2.5',
+                    currentOrder.paymentStatus === 'paid'
+                      ? 'bg-green-50 text-green-700'
+                      : 'bg-amber-50 text-amber-700'
+                  )}>
+                    <CreditCard className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-xs font-semibold">
+                      {currentOrder.paymentStatus === 'paid'
+                        ? `Da thanh toan online`
+                        : 'Thanh toan khi nhan hang (COD)'}
+                    </span>
+                  </div>
+                )}
 
                 {/* Estimated time */}
                 <div className="flex items-center gap-2 bg-amber-50 rounded-xl px-3 py-2.5">

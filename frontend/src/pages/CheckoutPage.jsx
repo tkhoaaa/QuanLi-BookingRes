@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, CreditCard, Truck, Store, Sparkles, ChevronRight, ChevronLeft, Check, Tag, X, Minus, Plus } from 'lucide-react'
+import { MapPin, CreditCard, Truck, Store, Sparkles, ChevronRight, ChevronLeft, Check, Tag, X, Minus, Plus, QrCode, ExternalLink, Clock, AlertCircle } from 'lucide-react'
 import { createOrder } from '../slices/ordersSlice'
 import { selectCartItems, selectCartTotal, clearCart, removeItem, updateQuantity, setCoupon } from '../slices/cartSlice'
 import { formatCurrency, cn, resolveFoodImage } from '../lib/utils'
@@ -15,6 +15,7 @@ import Select from '../components/ui/Select'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import toast from 'react-hot-toast'
 import axiosClient from '../api/axiosClient'
+import { createPayment } from '../api/payment'
 
 const STEPS = [
   { id: 1, label: 'Thong tin' },
@@ -57,6 +58,11 @@ export default function CheckoutPage() {
   const [fulfillmentType, setFulfillmentType] = useState('delivery')
   const [paymentMethod, setPaymentMethod] = useState('COD')
   const [branches, setBranches] = useState([])
+
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [paymentModalData, setPaymentModalData] = useState(null) // { order, paymentUrl, qrCodeUrl, method }
+  const [creatingPayment, setCreatingPayment] = useState(false)
 
   // Coupon state
   const [couponInput, setCouponInput] = useState('')
@@ -154,7 +160,6 @@ export default function CheckoutPage() {
     }
 
     try {
-      const formData = useForm ? {} : {}
       const shippingAddress = fulfillmentType === 'delivery'
         ? {
             name: user?.name || '',
@@ -182,11 +187,51 @@ export default function CheckoutPage() {
       }
 
       const result = await dispatch(createOrder(orderData)).unwrap()
+
+      // For online payment (VNPay/MoMo), show payment modal
+      if (paymentMethod === 'VNPAY' || paymentMethod === 'MOMO') {
+        setCreatingPayment(true)
+        try {
+          const payRes = await createPayment(result._id, paymentMethod)
+          const payData = payRes.data?.data || payRes.data || {}
+          setPaymentModalData({
+            order: result,
+            paymentUrl: payData.paymentUrl,
+            qrCodeUrl: payData.qrCodeUrl,
+            method: paymentMethod,
+            amount: grandTotal,
+          })
+          setShowPaymentModal(true)
+        } catch (payErr) {
+          toast.error('Khong the tao thanh toan. Vui long thu lai.')
+          console.error(payErr)
+        } finally {
+          setCreatingPayment(false)
+        }
+        return
+      }
+
+      // COD: clear cart and navigate to success
       dispatch(clearCart())
       toast.success('Dat hang thanh cong!')
       navigate(`/orders/${result._id}`)
     } catch (error) {
       toast.error(error?.message || error || 'Dat hang that bai. Vui long thu lai.')
+    }
+  }
+
+  const handlePaymentRedirect = () => {
+    if (paymentModalData?.paymentUrl) {
+      window.location.href = paymentModalData.paymentUrl
+    }
+  }
+
+  const handlePaymentModalClose = () => {
+    setShowPaymentModal(false)
+    // Clear the order from success page navigation — redirect to order tracking
+    if (paymentModalData?.order) {
+      dispatch(clearCart())
+      navigate(`/orders/${paymentModalData.order._id}`)
     }
   }
 
@@ -554,11 +599,11 @@ export default function CheckoutPage() {
                     <Button
                       size="lg"
                       onClick={onPlaceOrder}
-                      loading={loading}
-                      disabled={loading}
+                      loading={loading || creatingPayment}
+                      disabled={loading || creatingPayment}
                       className="bg-secondary hover:bg-secondary-dark"
                     >
-                      Dat hang ngay
+                      {creatingPayment ? 'Dang chuyen thanh toan...' : 'Dat hang ngay'}
                     </Button>
                   </div>
                 </motion.div>
@@ -644,6 +689,130 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal for VNPay / MoMo */}
+      <AnimatePresence>
+        {showPaymentModal && paymentModalData && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={handlePaymentModalClose}
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+            >
+              <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 pointer-events-auto space-y-4">
+                {/* Header */}
+                <div className="text-center">
+                  <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                    {paymentModalData.method === 'MOMO' ? (
+                      <span className="text-2xl">📱</span>
+                    ) : (
+                      <CreditCard className="w-7 h-7 text-primary" />
+                    )}
+                  </div>
+                  <h3 className="text-lg font-bold text-charcoal-900 font-heading">
+                    {paymentModalData.method === 'MOMO' ? 'Thanh toan MoMo' : 'Thanh toan VNPay'}
+                  </h3>
+                  <p className="text-sm text-charcoal-500 mt-1">
+                    Don hang cua ban dang cho thanh toan
+                  </p>
+                </div>
+
+                {/* Amount */}
+                <div className="bg-cream rounded-xl p-4 text-center">
+                  <p className="text-xs text-charcoal-500 mb-1">So tien thanh toan</p>
+                  <p className="text-2xl font-bold text-secondary font-heading">
+                    {formatCurrency(paymentModalData.amount)}
+                  </p>
+                </div>
+
+                {/* Expiry notice */}
+                <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-2.5 rounded-xl">
+                  <Clock className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-xs font-medium">Han thanh toan: 15 phut</span>
+                </div>
+
+                {/* QR Code placeholder for MoMo */}
+                {paymentModalData.method === 'MOMO' && paymentModalData.qrCodeUrl && (
+                  <div className="flex justify-center">
+                    <div className="border-2 border-dashed border-charcoal-200 rounded-xl p-3">
+                      <img
+                        src={paymentModalData.qrCodeUrl}
+                        alt="MoMo QR Code"
+                        className="w-40 h-40 object-contain"
+                        onError={(e) => { e.target.style.display = 'none' }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* QR code placeholder text when no URL */}
+                {paymentModalData.method === 'MOMO' && !paymentModalData.qrCodeUrl && (
+                  <div className="flex justify-center">
+                    <div className="border-2 border-dashed border-charcoal-200 rounded-xl p-6 flex flex-col items-center gap-2">
+                      <QrCode className="w-12 h-12 text-charcoal-300" />
+                      <p className="text-xs text-charcoal-400">Dang tao QR...</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Instructions */}
+                <div className="bg-blue-50 text-blue-700 px-3 py-2.5 rounded-xl text-xs space-y-1">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                    <span>Don hang #{paymentModalData.order?._id?.slice(-8).toUpperCase()} dang cho thanh toan. Vui long thanh toan trong 15 phut.</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-col gap-2">
+                  {paymentModalData.method === 'VNPAY' && (
+                    <Button
+                      size="lg"
+                      onClick={handlePaymentRedirect}
+                      icon={ExternalLink}
+                      iconPosition="right"
+                      className="w-full min-h-[52px]"
+                    >
+                      Thanh toan ngay
+                    </Button>
+                  )}
+                  {paymentModalData.method === 'MOMO' && (
+                    <Button
+                      size="lg"
+                      onClick={handlePaymentRedirect}
+                      icon={ExternalLink}
+                      iconPosition="right"
+                      className="w-full min-h-[52px]"
+                    >
+                      Mo ung dung MoMo
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    onClick={handlePaymentModalClose}
+                    className="w-full"
+                  >
+                    Quay lai
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

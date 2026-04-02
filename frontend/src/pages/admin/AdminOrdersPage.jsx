@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
-import { Search, Eye, UserPlus, Truck, ChevronUp, ChevronDown, ShoppingBag } from 'lucide-react'
+import { Search, Eye, UserPlus, Truck, ChevronUp, ChevronDown, ShoppingBag, CheckSquare, Square } from 'lucide-react'
 import { fetchAllOrders, updateOrderStatus, assignShipper } from '../../slices/ordersSlice'
 import { ORDER_STATUS, ORDER_STATUS_TRANSITIONS, ORDER_STATUS_COLORS } from '../../constants'
 import StatusBadge from '../../components/ui/StatusBadge'
@@ -39,6 +39,12 @@ export default function AdminOrdersPage() {
   const [sortField, setSortField] = useState('createdAt')
   const [sortDir, setSortDir] = useState('desc')
   const [warnStatusSkip, setWarnStatusSkip] = useState(null)
+
+  // Batch shipper assignment
+  const [selectedOrderIds, setSelectedOrderIds] = useState([])
+  const [batchShipperDialogOpen, setBatchShipperDialogOpen] = useState(false)
+  const [batchShipperId, setBatchShipperId] = useState('')
+  const [loadingBatchAssign, setLoadingBatchAssign] = useState(false)
 
   useEffect(() => {
     axiosClient.get('/admin/users?role=shipper&limit=100').then(res => {
@@ -116,6 +122,50 @@ export default function AdminOrdersPage() {
     }
   }
 
+  const toggleOrderSelection = (orderId) => {
+    setSelectedOrderIds(prev =>
+      prev.includes(orderId)
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    )
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.length === orders.length) {
+      setSelectedOrderIds([])
+    } else {
+      setSelectedOrderIds(orders.map(o => o._id))
+    }
+  }
+
+  const handleBatchAssignClick = () => {
+    if (selectedOrderIds.length === 0) {
+      toast.error('Chon it nhat mot don hang')
+      return
+    }
+    setBatchShipperDialogOpen(true)
+    setBatchShipperId('')
+  }
+
+  const confirmBatchAssign = async () => {
+    if (!batchShipperId) return
+    setLoadingBatchAssign(true)
+    try {
+      await axiosClient.post('/delivery/assign-batch', {
+        orderIds: selectedOrderIds,
+        shipperId: batchShipperId,
+      })
+      toast.success(`Da gan ${selectedOrderIds.length} don hang cho shipper`)
+      setSelectedOrderIds([])
+      setBatchShipperDialogOpen(false)
+      dispatch(fetchAllOrders({ page, limit: 20, status: statusFilter, search, sortField, sortDir }))
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Gan shipper that bai')
+    } finally {
+      setLoadingBatchAssign(false)
+    }
+  }
+
   const statusOptions = [
     { value: '', label: 'Tất cả' },
     { value: 'pending', label: 'Chờ xử lý' },
@@ -143,6 +193,16 @@ export default function AdminOrdersPage() {
             <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
             <p className="text-gray-500 text-sm">{pagination.total || 0} đơn hàng trong hệ thống</p>
           </div>
+          {selectedOrderIds.length > 0 && (
+            <Button
+              size="sm"
+              onClick={handleBatchAssignClick}
+              icon={Truck}
+              className="shrink-0"
+            >
+              Gan {selectedOrderIds.length} don cho shipper
+            </Button>
+          )}
         </div>
       </div>
 
@@ -188,6 +248,13 @@ export default function AdminOrdersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-500 bg-gray-50 border-b">
+                  <th className="px-4 py-3 font-medium w-10">
+                    <button onClick={toggleSelectAll} className="text-charcoal-400 hover:text-primary transition-colors" title="Chon tat ca">
+                      {selectedOrderIds.length === orders.length && orders.length > 0
+                        ? <CheckSquare className="w-4 h-4" />
+                        : <Square className="w-4 h-4" />}
+                    </button>
+                  </th>
                   <th className="px-4 py-3 font-medium group cursor-pointer select-none" onClick={() => handleSort('_id')}>
                     <div className="flex items-center gap-1">
                       Mã đơn <SortIcon field="_id" />
@@ -224,6 +291,16 @@ export default function AdminOrdersPage() {
                       animate={{ opacity: 1 }}
                       className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${isSkipping ? 'bg-amber-50' : ''}`}
                     >
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => toggleOrderSelection(order._id)}
+                          className="text-charcoal-400 hover:text-primary transition-colors"
+                        >
+                          {selectedOrderIds.includes(order._id)
+                            ? <CheckSquare className="w-4 h-4 text-primary" />
+                            : <Square className="w-4 h-4" />}
+                        </button>
+                      </td>
                       <td className="px-4 py-3 font-medium text-gray-900">
                         #{order._id?.slice(-8).toUpperCase()}
                       </td>
@@ -335,6 +412,34 @@ export default function AdminOrdersPage() {
         }
         confirmLabel={selectedShipper ? 'Gán shipper' : 'Hủy gán'}
         loading={loadingAssign}
+      />
+
+      {/* Batch Shipper Assignment Dialog */}
+      <ConfirmDialog
+        isOpen={batchShipperDialogOpen}
+        onClose={() => setBatchShipperDialogOpen(false)}
+        onConfirm={confirmBatchAssign}
+        title="Gan nhieu don cho shipper"
+        message={
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              Gan <strong>{selectedOrderIds.length}</strong> don hang da chon cho shipper:
+            </p>
+            <select
+              value={batchShipperId}
+              onChange={(e) => setBatchShipperId(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            >
+              <option value="">-- Chon shipper --</option>
+              {shippers.map((s) => (
+                <option key={s._id} value={s._id}>{s.name} {s.phone ? `(${s.phone})` : ''}</option>
+              ))}
+            </select>
+          </div>
+        }
+        confirmLabel={batchShipperId ? `Gan ${selectedOrderIds.length} don` : 'Chon shipper'}
+        loading={loadingBatchAssign}
+        disabled={!batchShipperId}
       />
     </div>
   )

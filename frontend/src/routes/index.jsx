@@ -19,6 +19,8 @@ import OrderSuccessPage from '../pages/OrderSuccessPage'
 import WishlistPage from '../pages/WishlistPage'
 import NotificationsPage from '../pages/NotificationsPage'
 import NotFoundPage from '../pages/NotFoundPage'
+import ReservationPage from '../pages/ReservationPage'
+import ReservationSuccessPage from '../pages/ReservationSuccessPage'
 
 // Admin pages
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
@@ -30,6 +32,7 @@ import AdminPromosPage from '../pages/admin/AdminPromosPage'
 import AdminBranchesPage from '../pages/admin/AdminBranchesPage'
 import AdminAuditLogPage from '../pages/admin/AdminAuditLogPage'
 import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage'
+import AdminReservationsPage from '../pages/admin/AdminReservationsPage'
 
 // Shipper pages
 import ShipperDashboardPage from '../pages/shipper/ShipperDashboardPage'
@@ -79,6 +82,8 @@ export default function AppRoutes() {
           path="notifications"
           element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>}
         />
+        <Route path="reservation" element={<ReservationPage />} />
+        <Route path="reservation/success" element={<ReservationSuccessPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
@@ -93,6 +98,7 @@ export default function AppRoutes() {
         <Route path="branches" element={<AdminBranchesPage />} />
         <Route path="audit-logs" element={<AdminAuditLogPage />} />
         <Route path="categories" element={<AdminCategoriesPage />} />
+        <Route path="reservations" element={<AdminReservationsPage />} />
       </Route>
 
       {/* ── Shipper layout ────────────────────────────────── */}

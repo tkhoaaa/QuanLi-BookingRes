@@ -50,6 +50,19 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
+    loyaltyPoints: {
+      type: Number,
+      default: 0,
+    },
+    memberTier: {
+      type: String,
+      enum: ["bronze", "silver", "gold", "diamond"],
+      default: "bronze",
+    },
+    totalSpent: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

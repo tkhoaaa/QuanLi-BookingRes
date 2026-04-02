@@ -22,6 +22,7 @@ import {
   Tag,
   Search,
   FileText,
+  Calendar,
 } from 'lucide-react'
 import { logout } from '../slices/authSlice'
 import { selectUnreadCount } from '../slices/notificationsSlice'
@@ -37,6 +38,7 @@ const sidebarLinks = [
   { to: '/admin/branches', label: 'Chi nhánh', icon: MapPin },
   { to: '/admin/audit-logs', label: 'Nhật ký hệ thống', icon: FileText },
   { to: '/admin/categories', label: 'Danh mục', icon: Tag },
+  { to: '/admin/reservations', label: 'Đặt bàn', icon: Calendar },
 ]
 
 function buildBreadcrumbs(pathname) {

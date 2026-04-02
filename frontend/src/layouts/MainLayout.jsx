@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Search,
   ChevronDown,
+  Calendar,
 } from 'lucide-react'
 import { logout } from '../slices/authSlice'
 import { clearWishlist } from '../slices/wishlistSlice'
@@ -55,6 +56,7 @@ export default function MainLayout() {
 
   const navLinks = [
     { to: '/', label: 'Trang chủ' },
+    { to: '/reservation', label: 'Đặt bàn', icon: Calendar },
     { to: '/cart', label: 'Giỏ hàng' },
   ]
 

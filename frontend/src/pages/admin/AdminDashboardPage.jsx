@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
 import {
@@ -13,11 +13,13 @@ import {
   Calendar,
   BarChart3,
   PieChart as PieChartIcon,
+  Loader2,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, PieChart, Pie, Legend,
 } from 'recharts'
+import { fetchAnalyticsOverview } from '../../slices/analyticsSlice'
 import { fetchAllOrders } from '../../slices/ordersSlice'
 import { formatCurrency } from '../../lib/utils'
 import axiosClient from '../../api/axiosClient'
@@ -25,8 +27,8 @@ import { CATEGORIES } from '../../constants'
 
 const DATE_RANGES = [
   { value: 'today', label: 'Hôm nay' },
-  { value: '7days', label: '7 ngày' },
-  { value: '30days', label: '30 ngày' },
+  { value: '7d', label: '7 ngày' },
+  { value: '30d', label: '30 ngày' },
 ]
 
 const ORDER_STATUS_COLORS = {
@@ -47,205 +49,58 @@ const CATEGORY_COLORS = [
 
 export default function AdminDashboardPage() {
   const dispatch = useDispatch()
+  const { overview, revenueChart, topItems, categoryRevenue, statusStats, loading, currentRange } = useSelector((state) => state.analytics)
   const { orders } = useSelector((state) => state.orders)
   const { foods } = useSelector((state) => state.foods)
-  const [totalUsers, setTotalUsers] = useState(0)
-  const [dateRange, setDateRange] = useState('7days')
+  const [dateRange, setDateRange] = useState('7d')
 
   useEffect(() => {
+    dispatch(fetchAnalyticsOverview({ range: dateRange }))
     dispatch(fetchAllOrders({ limit: 500 }))
-    axiosClient.get('/admin/users?limit=1').then(res => {
-      setTotalUsers(res.data.pagination?.total || 0)
-    }).catch(() => {
-      setTotalUsers(0)
-    })
-  }, [dispatch])
+  }, [dispatch, dateRange])
 
-  // Get date boundaries based on selected range
-  const dateBounds = useMemo(() => {
-    const now = new Date()
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const todayEnd = new Date(todayStart)
-    todayEnd.setDate(todayEnd.getDate() + 1)
+  // Chart data from API
+  const chartData = revenueChart.map(d => ({
+    day: d.label,
+    shortDay: d.shortLabel,
+    revenue: d.revenue,
+    orders: d.orderCount,
+  }))
 
-    let start, end, prevStart, prevEnd
+  // Category data from API
+  const categoryData = categoryRevenue?.categories?.map((cat, i) => ({
+    name: CATEGORIES.find(c => c.value === cat.category)?.label || cat.category,
+    value: cat.revenue,
+    percent: cat.percent,
+  })) || []
 
-    if (dateRange === 'today') {
-      start = todayStart
-      end = todayEnd
-      prevStart = new Date(todayStart)
-      prevStart.setDate(prevStart.getDate() - 1)
-      prevEnd = todayStart
-    } else if (dateRange === '7days') {
-      start = new Date(todayStart)
-      start.setDate(start.getDate() - 6)
-      end = todayEnd
-      prevStart = new Date(start)
-      prevStart.setDate(prevStart.getDate() - 7)
-      prevEnd = start
-    } else if (dateRange === '30days') {
-      start = new Date(todayStart)
-      start.setDate(start.getDate() - 29)
-      end = todayEnd
-      prevStart = new Date(start)
-      prevStart.setDate(prevStart.getDate() - 30)
-      prevEnd = start
-    }
+  // Top selling items from API
+  const topSelling = topItems.map(item => ({
+    name: item.name,
+    quantity: item.quantity,
+    category: item.category,
+  }))
 
-    return { start, end, prevStart, prevEnd }
-  }, [dateRange])
+  // Status data from API
+  const statusData = statusStats
 
-  // Filtered orders for current period
-  const filteredOrders = useMemo(() => {
-    return orders.filter(o => {
-      const d = new Date(o.updatedAt || o.createdAt)
-      return d >= dateBounds.start && d < dateBounds.end
-    })
-  }, [orders, dateBounds])
-
-  // Previous period orders
-  const prevOrders = useMemo(() => {
-    return orders.filter(o => {
-      const d = new Date(o.updatedAt || o.createdAt)
-      return d >= dateBounds.prevStart && d < dateBounds.prevEnd
-    })
-  }, [orders, dateBounds])
-
-  // Compute KPI stats
-  const stats = useMemo(() => {
-    const currDelivered = filteredOrders.filter(o => o.status === 'delivered')
-    const prevDelivered = prevOrders.filter(o => o.status === 'delivered')
-
-    const currRevenue = currDelivered.reduce((s, o) => s + (o.total || 0), 0)
-    const prevRevenue = prevDelivered.reduce((s, o) => s + (o.total || 0), 0)
-
-    const currOrders = filteredOrders.length
-    const prevOrdersCount = prevOrders.length
-
-    const revenueGrowth = prevRevenue > 0
-      ? Math.round(((currRevenue - prevRevenue) / prevRevenue) * 100)
-      : currRevenue > 0 ? 100 : 0
-
-    const ordersGrowth = prevOrdersCount > 0
-      ? Math.round(((currOrders - prevOrdersCount) / prevOrdersCount) * 100)
-      : currOrders > 0 ? 100 : 0
-
-    const avgOrderValue = currOrders > 0 ? Math.round(currRevenue / currOrders) : 0
-    const prevAvg = prevOrdersCount > 0 ? Math.round(prevRevenue / prevOrdersCount) : 0
-    const avgGrowth = prevAvg > 0
-      ? Math.round(((avgOrderValue - prevAvg) / prevAvg) * 100)
-      : avgOrderValue > 0 ? 100 : 0
-
-    return {
-      totalRevenue: currRevenue,
-      totalOrders: currOrders,
-      totalUsers,
-      totalFoods: foods.length,
-      avgOrderValue,
-      revenueGrowth,
-      ordersGrowth,
-      avgGrowth,
-    }
-  }, [filteredOrders, prevOrders, foods, totalUsers])
-
-  // Chart data for the period (grouped by day)
-  const chartData = useMemo(() => {
-    const days = []
-    let numDays = dateRange === 'today' ? 1 : dateRange === '7days' ? 7 : 30
-    if (dateRange === 'today') numDays = 1
-
-    const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
-
-    for (let i = numDays - 1; i >= 0; i--) {
-      const d = new Date()
-      d.setDate(d.getDate() - i)
-      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-      const dayEnd = new Date(dayStart)
-      dayEnd.setDate(dayEnd.getDate() + 1)
-
-      const dayOrders = filteredOrders.filter(o => {
-        const od = new Date(o.updatedAt || o.createdAt)
-        return od >= dayStart && od < dayEnd
-      })
-
-      days.push({
-        day: dayStart.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
-        shortDay: dayNames[dayStart.getDay()],
-        revenue: dayOrders.filter(o => o.status === 'delivered').reduce((s, o) => s + (o.total || 0), 0),
-        orders: dayOrders.length,
-      })
-    }
-    return days
-  }, [filteredOrders, dateRange])
-
-  // Revenue by category from delivered orders
-  const categoryData = useMemo(() => {
-    const catRevenue = {}
-    filteredOrders.filter(o => o.status === 'delivered').forEach(order => {
-      (order.items || []).forEach(item => {
-        const cat = item.category || 'other'
-        catRevenue[cat] = (catRevenue[cat] || 0) + (item.price || 0) * (item.quantity || 1)
-      })
-    })
-    return CATEGORIES
-      .filter(c => catRevenue[c.value])
-      .map(c => ({
-        name: c.label,
-        value: catRevenue[c.value],
-      }))
-      .concat(
-        Object.entries(catRevenue)
-          .filter(([k]) => !CATEGORIES.find(c => c.value === k))
-          .map(([k, v]) => ({ name: k, value: v }))
-      )
-      .filter(d => d.value > 0)
-      .map(d => ({
-        ...d,
-        percent: stats.totalRevenue > 0
-          ? Math.round((d.value / stats.totalRevenue) * 100)
-          : 0,
-      }))
-  }, [filteredOrders, stats.totalRevenue])
-
-  // Top selling items
-  const topSelling = useMemo(() => {
-    const soldCount = {}
-    filteredOrders.forEach(order => {
-      (order.items || []).forEach(item => {
-        const key = item.foodId || item.name
-        if (!soldCount[key]) {
-          soldCount[key] = { name: item.name || 'Unknown', quantity: 0, category: item.category }
-        }
-        soldCount[key].quantity += item.quantity || 1
-      })
-    })
-    return Object.values(soldCount)
-      .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 5)
-  }, [filteredOrders])
-
-  // Order status distribution
-  const statusData = useMemo(() => {
-    const counts = {}
-    filteredOrders.forEach(o => {
-      counts[o.status] = (counts[o.status] || 0) + 1
-    })
-    return Object.entries(counts)
-      .map(([status, count]) => ({
-        status,
-        count,
-        label: status.charAt(0).toUpperCase() + status.slice(1),
-        color: ORDER_STATUS_COLORS[status] || '#6b7280',
-      }))
-      .sort((a, b) => b.count - a.count)
-  }, [filteredOrders])
+  const stats = {
+    totalRevenue: overview?.totalRevenue || 0,
+    totalOrders: overview?.totalOrders || 0,
+    totalUsers: overview?.totalUsers || 0,
+    totalFoods: overview?.totalFoods || 0,
+    avgOrderValue: overview?.avgOrderValue || 0,
+    revenueGrowth: overview?.revenueGrowth || 0,
+    ordersGrowth: overview?.ordersGrowth || 0,
+    avgGrowth: overview?.avgGrowth || 0,
+  }
 
   // Mini bar data for stat cards
   const statCards = [
     {
       label: 'Doanh thu',
       value: formatCurrency(stats.totalRevenue),
-      sub: `${dateRange === 'today' ? 'Hôm nay' : dateRange === '7days' ? '7 ngày qua' : '30 ngày qua'}`,
+      sub: `${dateRange === 'today' ? 'Hôm nay' : dateRange === '7d' ? '7 ngày qua' : '30 ngày qua'}`,
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
@@ -420,7 +275,7 @@ export default function AdminDashboardPage() {
             <div>
               <h2 className="font-semibold text-gray-900">Doanh thu</h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                {dateRange === 'today' ? 'Hôm nay' : dateRange === '7days' ? '7 ngày qua' : '30 ngày qua'}
+                {loading ? 'Đang tải...' : dateRange === 'today' ? 'Hôm nay' : dateRange === '7d' ? '7 ngày qua' : '30 ngày qua'}
               </p>
             </div>
             <BarChart3 className="w-5 h-5 text-orange-500" />
@@ -428,7 +283,7 @@ export default function AdminDashboardPage() {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis dataKey={dateRange === '30days' ? 'day' : 'shortDay'} fontSize={11} tickLine={false} />
+              <XAxis dataKey={dateRange === '30d' ? 'day' : 'shortDay'} fontSize={11} tickLine={false} />
               <YAxis fontSize={11} tickLine={false} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
               <Tooltip content={<CustomTooltip formatter={(v) => formatCurrency(v)} />} />
               <Bar dataKey="revenue" name="Doanh thu" fill="#f97316" radius={[4, 4, 0, 0]} />
@@ -446,7 +301,7 @@ export default function AdminDashboardPage() {
             <div>
               <h2 className="font-semibold text-gray-900">Số đơn hàng</h2>
               <p className="text-xs text-gray-400 mt-0.5">
-                {dateRange === 'today' ? 'Hôm nay' : dateRange === '7days' ? '7 ngày qua' : '30 ngày qua'}
+                {loading ? 'Đang tải...' : dateRange === 'today' ? 'Hôm nay' : dateRange === '7d' ? '7 ngày qua' : '30 ngày qua'}
               </p>
             </div>
             <ShoppingBag className="w-5 h-5 text-blue-500" />
@@ -454,7 +309,7 @@ export default function AdminDashboardPage() {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-              <XAxis dataKey={dateRange === '30days' ? 'day' : 'shortDay'} fontSize={11} tickLine={false} />
+              <XAxis dataKey={dateRange === '30d' ? 'day' : 'shortDay'} fontSize={11} tickLine={false} />
               <YAxis fontSize={11} tickLine={false} allowDecimals={false} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="orders" name="Đơn hàng" fill="#3b82f6" radius={[4, 4, 0, 0]} />
@@ -628,31 +483,41 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.slice(0, 8).map((order) => {
-                const statusColor = ORDER_STATUS_COLORS[order.status] || '#6b7280'
-                return (
-                  <tr key={order._id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                    <td className="py-3 font-medium text-gray-900">#{order._id?.slice(-8).toUpperCase()}</td>
-                    <td className="py-3 text-gray-600">{order.fullName || order.user?.name || 'Khách'}</td>
-                    <td className="py-3 text-primary font-medium">{formatCurrency(order.total)}</td>
-                    <td className="py-3">
-                      <span
-                        className="px-2 py-0.5 rounded-full text-xs font-medium capitalize"
-                        style={{ backgroundColor: `${statusColor}20`, color: statusColor }}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="py-3 text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString('vi-VN')}
-                    </td>
-                  </tr>
-                )
-              })}
-              {filteredOrders.length === 0 && (
+              {loading ? (
                 <tr>
                   <td colSpan={5} className="py-8 text-center text-gray-400">
-                    Chưa có đơn hàng nào trong khoảng thời gian này
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Đang tải dữ liệu...
+                    </div>
+                  </td>
+                </tr>
+              ) : orders.length > 0 ? (
+                orders.slice(0, 8).map((order) => {
+                  const statusColor = ORDER_STATUS_COLORS[order.status] || '#6b7280'
+                  return (
+                    <tr key={order._id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                      <td className="py-3 font-medium text-gray-900">#{order._id?.slice(-8).toUpperCase()}</td>
+                      <td className="py-3 text-gray-600">{order.fullName || order.user?.name || 'Khách'}</td>
+                      <td className="py-3 text-primary font-medium">{formatCurrency(order.total)}</td>
+                      <td className="py-3">
+                        <span
+                          className="px-2 py-0.5 rounded-full text-xs font-medium capitalize"
+                          style={{ backgroundColor: `${statusColor}20`, color: statusColor }}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="py-3 text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                      </td>
+                    </tr>
+                  )
+                })
+              ) : (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-gray-400">
+                    Chưa có đơn hàng nào
                   </td>
                 </tr>
               )}

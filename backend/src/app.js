@@ -12,6 +12,11 @@ const reviewRoutes = require("./routes/review.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const adminRoutes = require("./routes/admin.routes");
 const uploadRoutes = require("./routes/upload.routes");
+const loyaltyRoutes = require("./routes/loyalty.routes");
+const analyticsRoutes = require("./routes/analytics.routes");
+const reservationRoutes = require("./routes/reservation.routes");
+const paymentRoutes = require("./routes/payment.routes");
+const deliveryRoutes = require("./routes/delivery.routes");
 const rateLimiter = require("./middlewares/rateLimiter.middleware");
 
 const app = express();
@@ -38,6 +43,11 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/loyalty", loyaltyRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/reservations", reservationRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/delivery", deliveryRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
